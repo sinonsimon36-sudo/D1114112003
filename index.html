@@ -2,168 +2,161 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>Pixel RPG - 1080p 最終優化版</title>
+    <title>Pixel RPG - 大廳與自動戰鬥版</title>
     <style>
-        body { 
-            background: #ffffff; color: #333; margin: 0; 
-            font-family: sans-serif; display: flex; flex-direction: column; align-items: center;
-            height: 100vh; overflow: hidden;
-        }
+        body { background: #fff; color: #333; font-family: sans-serif; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #game-container { width: 90vw; max-width: 1400px; height: 90vh; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .hidden { display: none !important; }
 
-        #game-container { 
-            width: 95vw; height: 98vh; display: flex; flex-direction: column; justify-content: space-around;
-        }
+        /* 1. 大廳/開始畫面 */
+        #lobby { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+        #lobby img { width: 500px; height: auto; image-rendering: pixelated; margin-bottom: 20px; }
+        #lobby .story-text { font-size: 1.5rem; color: #666; margin-bottom: 30px; text-align: center; line-height: 1.6; }
 
-        /* 頂部 UI 放大 */
-        .header { 
-            display: flex; justify-content: space-around; font-size: 2.5rem; font-weight: bold;
-            padding: 10px; background: #f0f0f0; border-radius: 15px;
-        }
+        /* 2. 戰鬥畫面 - 強制置中與並排 */
+        #battle-screen { width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .stats-top { width: 100%; display: flex; justify-content: space-around; font-size: 1.5rem; font-weight: bold; background: #f8f9fa; padding: 10px; border-radius: 10px; }
+        
+        .arena { display: flex; flex-direction: row; justify-content: center; align-items: flex-end; gap: 80px; width: 100%; height: 450px; margin-top: 20px; }
+        .character-box { width: 400px; display: flex; flex-direction: column; align-items: center; position: relative; }
+        .sprite { width: 100%; height: 300px; display: flex; align-items: flex-end; justify-content: center; }
+        .sprite img { max-width: 100%; max-height: 100%; image-rendering: pixelated; object-fit: contain; }
+        #player-sprite img { transform: scaleX(-1); } /* 勇者翻轉 */
 
-        /* 核心：限制圖片區域，不讓圖片撐爆螢幕 */
-        .stage { 
-            display: flex; justify-content: center; align-items: flex-end; gap: 5vw;
-            height: 50vh; /* 限制戰鬥區域高度佔螢幕一半 */
-        }
+        /* 血條 UI */
+        .hp-outer { width: 100%; height: 25px; background: #eee; border: 2px solid #ccc; border-radius: 15px; overflow: hidden; margin-top: 10px; }
+        .hp-inner { height: 100%; background: #ff4757; width: 100%; transition: width 0.3s; }
+        .name-label { font-size: 1.5rem; font-weight: bold; margin-top: 5px; }
 
-        .entity { 
-            width: 40vw; /* 限制寬度佔螢幕 40% */
-            max-width: 600px; text-align: center; position: relative;
-        }
-
-        .entity img { 
-            width: 100%; height: auto; max-height: 40vh; /* 強制圖片高度不超過螢幕 40% */
-            image-rendering: pixelated; object-fit: contain;
-        }
-
-        /* 勇者水平翻轉 */
-        #player-sprite img { transform: scaleX(-1); }
-
-        /* 血條與文字 UI 放大 */
-        .hp-box { 
-            width: 100%; height: 35px; background: #eee; border: 3px solid #ccc; 
-            border-radius: 20px; overflow: hidden; margin-top: 15px;
-        }
-        .hp-bar { height: 100%; background: #ff4757; width: 100%; transition: width 0.3s; }
-        .label { font-size: 2rem; font-weight: bold; margin-top: 10px; }
-
-        /* 遊戲日誌與按鈕 UI 放大 */
-        #log { 
-            height: 120px; background: #f9f9f9; padding: 15px; font-size: 1.8rem;
-            border: 2px solid #ddd; overflow-y: auto; text-align: left; width: 80%; margin: 0 auto;
-        }
-
-        .btns { margin: 20px 0; display: flex; justify-content: center; gap: 30px; }
-        button { 
-            padding: 20px 60px; font-size: 2rem; font-weight: bold; cursor: pointer;
-            background: #2f3542; color: white; border: none; border-radius: 15px;
-        }
+        /* 劇情與日誌 */
+        #log { width: 800px; height: 100px; background: #f1f2f6; border: 1px solid #ddd; padding: 15px; margin-top: 20px; overflow-y: auto; font-size: 1.2rem; text-align: left; }
+        .btns { margin-top: 20px; display: flex; gap: 20px; }
+        button { padding: 15px 40px; font-size: 1.5rem; font-weight: bold; cursor: pointer; background: #2f3542; color: white; border: none; border-radius: 10px; }
         button:disabled { opacity: 0.3; }
 
         /* 傷害飄字 */
-        .dmg { position: absolute; top: 0; color: red; font-size: 4rem; font-weight: bold; animation: f 0.8s forwards; }
-        @keyframes f { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
+        .dmg { position: absolute; top: 0; color: red; font-size: 3rem; font-weight: bold; animation: f 0.8s forwards; pointer-events: none; }
+        @keyframes f { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div class="header">
-        <div>等級: <span id="lv">1</span></div>
-        <div>地區: 平原森林</div>
-        <div>經驗: <span id="exp">0</span>/100</div>
+    <!-- 大廳介面 -->
+    <div id="lobby">
+        <img src="pixel_art_rpg_logo.png" alt="Logo">
+        <div class="story-text">在遙遠的像素大陸，黑暗勢力正在崛起。<br>身為學號勇者的你，必須挺身而出掃蕩森林中的史萊姆！</div>
+        <button onclick="startGame()">踏上征途</button>
     </div>
 
-    <div class="stage">
-        <!-- 玩家 -->
-        
-            <div id="p-dmg-pos"></div>
-            <div id="player-sprite"><img src="pixel_adventurer.png"></div>
-            <div class="label">勇者 (HP: <span id="hp">100</span>)</div>
-            <div class="hp-box"><div id="hp-bar" class="hp-bar"></div></div>
+    <!-- 戰鬥介面 -->
+    <div id="battle-screen" class="hidden">
+        <div class="stats-top">
+            <div>等級: <span id="lv">1</span></div>
+            <div id="story-line">💬 遭遇森林史萊姆</div>
+            <div>經驗: <span id="exp">0</span>/100</div>
         </div>
-        
-        <!-- 敵人 -->
-        
-            <div id="e-dmg-pos"></div>
-            <div id="enemy-sprite"><img src="pixel_slime.png" id="e-img"></div>
-            <div class="label"><span id="e-name">史萊姆</span> (HP: <span id="e-hp">40</span>)</div>
-            <div class="hp-box"><div id="e-hp-bar" class="hp-bar"></div></div>
+
+        <div class="arena">
+            <div class="character-box">
+                <div id="p-dmg"></div>
+                <div class="sprite" id="player-sprite"><img src="pixel_adventurer.png"></div>
+                <div class="name-label">勇者 (HP: <span id="hp">100</span>)</div>
+                <div class="hp-outer"><div id="hp-bar" class="hp-inner"></div></div>
+            </div>
+            <div class="character-box">
+                <div id="e-dmg"></div>
+                <div class="sprite" id="enemy-sprite"><img src="pixel_slime.png" id="e-img"></div>
+                <div class="name-label"><span id="e-name">史萊姆</span> (HP: <span id="e-hp">40</span>)</div>
+                <div class="hp-outer"><div id="e-hp-bar" class="hp-inner"></div></div>
+            </div>
         </div>
-    </div>
 
-    <div id="log">> 準備戰鬥！</div>
-
-    <div class="btns">
-        <button id="atk" onclick="battle('attack')">🗡️ 普通攻擊</button>
-        <button id="skl" class="hidden" onclick="battle('skill')">🔥 火球術</button>
+        <div id="log">> 戰鬥開始！</div>
+        <div class="btns">
+            <button id="atk" onclick="battle('attack')">🗡️ 普通攻擊</button>
+            <button id="skl" class="hidden" onclick="battle('skill')">🔥 火球術</button>
+        </div>
     </div>
 </div>
 
 <script>
-    let p = { lv: 1, hp: 100, mHp: 100, atk: 15, exp: 0, busy: false };
+    let p = { lv: 1, hp: 100, mHp: 100, atk: 18, exp: 0, busy: false };
     let e = { name: "史萊姆", hp: 40, mHp: 40, atk: 10 };
     let winCount = 0;
 
-    async function battle(type) {
-        if (p.busy) return;
-        p.busy = true;
-        document.getElementById('atk').disabled = true;
-        document.getElementById('skl').disabled = true;
+    const stories = [
+        "你在森林草叢中發現了異狀...", "草叢中鑽出一隻史萊姆！",
+        "這隻史萊姆似乎守護著什麼寶箱...", "遠處傳來了低沉的咆哮聲...",
+        "危險！強大的氣息正在靠近！"
+    ];
 
-        // --- 玩家回合 ---
+    function startGame() {
+        document.getElementById('lobby').classList.add('hidden');
+        document.getElementById('battle-screen').classList.remove('hidden');
+        update();
+    }
+
+    async function battle(type) {
+        if (p.busy) return; p.busy = true;
+        setBtns(false);
+
+        // 玩家回合
         let dmg = type === 'attack' ? p.atk + r(5) : p.atk * 2.5;
-        if(type === 'skill') p.hp -= 5;
+        if(type==='skill') p.hp -= 5;
         e.hp -= Math.floor(dmg);
-        
-        showDmg('e-dmg-pos', Math.floor(dmg));
-        animate('player-sprite', 50);
-        log(`你攻擊了，造成 ${Math.floor(dmg)} 點傷害！`);
+        showDmg('e-dmg', Math.floor(dmg));
+        move('player-sprite', 40);
+        log(`你施展${type==='attack'?'攻擊':'火球'}，造成 ${Math.floor(dmg)} 點傷害。`);
         update();
 
         await sleep(800);
         if (e.hp <= 0) {
-            log(`🎉 擊敗了 ${e.name}！`);
-            p.exp += 50;
-            if(p.exp >= 100) { p.lv++; p.exp=0; p.atk+=10; p.mHp+=30; p.hp=p.mHp; log("✨ 等級提升！"); }
-            winCount++;
-            await sleep(1000);
-            spawn();
+            await handleWin();
         } else {
-            // --- 敵人回合 ---
-            animate('enemy-sprite', -50);
+            // 敵人反擊
+            move('enemy-sprite', -40);
             let edmg = e.atk + r(5);
             p.hp -= edmg;
-            showDmg('p-dmg-pos', edmg);
+            showDmg('p-dmg', edmg);
             log(`${e.name} 反擊，造成 ${edmg} 點傷害。`);
             update();
             if (p.hp <= 0) { alert("戰敗！"); location.reload(); }
         }
+        p.busy = false; setBtns(true);
+    }
 
-        p.busy = false;
-        document.getElementById('atk').disabled = false;
-        document.getElementById('skl').disabled = false;
+    async function handleWin() {
+        log(`🎉 擊敗了 ${e.name}！`);
+        p.exp += 50;
+        if(p.exp >= 100) { p.lv++; p.exp=0; p.atk+=10; p.mHp+=30; p.hp=p.mHp; log("✨ 等級提升！力量湧現！"); }
+        winCount++;
+        update();
+        await sleep(1000);
+        spawn();
     }
 
     function spawn() {
         if((winCount+1) % 5 === 0) {
-            e = { name: "BOSS 魔王", hp: 300, mHp: 300, atk: 25 };
+            e = { name: "BOSS 魔王史萊姆", hp: 300, mHp: 300, atk: 25 };
             document.getElementById('e-img').style.filter = "hue-rotate(90deg) contrast(1.5)";
+            document.getElementById('story-line').innerText = "⚠️ 警告：強大生物出現！";
         } else {
-            e = { name: "史萊姆", hp: 40 + (p.lv*10), mHp: 40 + (p.lv*10), atk: 8 + (p.lv*2) };
+            e = { name: "森林史萊姆", hp: 40 + (p.lv*10), mHp: 40 + (p.lv*10), atk: 8 + (p.lv*2) };
             document.getElementById('e-img').style.filter = "none";
+            document.getElementById('story-line').innerText = "💬 " + stories[r(stories.length)];
         }
-        log(`新的 ${e.name} 出現了！`);
+        log(`新的 ${e.name} 刷新了！戰鬥自動開始。`);
         update();
     }
 
     function update() {
         document.getElementById('lv').innerText = p.lv;
         document.getElementById('hp').innerText = Math.max(0, p.hp);
-        document.getElementById('hp-bar').style.width = (p.hp / p.mHp * 100) + "%";
+        document.getElementById('hp-bar').style.width = (p.hp/p.mHp*100) + "%";
         document.getElementById('exp').innerText = p.exp;
         document.getElementById('e-hp').innerText = Math.max(0, e.hp);
-        document.getElementById('e-hp-bar').style.width = (e.hp / e.mHp * 100) + "%";
+        document.getElementById('e-hp-bar').style.width = (e.hp/e.mHp*100) + "%";
         document.getElementById('e-name').innerText = e.name;
         if(p.lv >= 2) document.getElementById('skl').classList.remove('hidden');
     }
@@ -171,9 +164,9 @@
     function log(m) { const l = document.getElementById('log'); l.innerHTML += `<div>> ${m}</div>`; l.scrollTop = l.scrollHeight; }
     function r(n) { return Math.floor(Math.random() * n); }
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-    function animate(id, x) { 
-        const el = document.getElementById(id); el.style.transition = '0.2s';
-        el.style.transform = `translateX(${x}px)`;
+    function setBtns(s) { document.getElementById('atk').disabled = !s; document.getElementById('skl').disabled = !s; }
+    function move(id, x) { 
+        const el = document.getElementById(id); el.style.transform = `translateX(${x}px)`;
         setTimeout(() => el.style.transform = 'none', 200);
     }
     function showDmg(id, val) {
@@ -181,7 +174,6 @@
         d.className = 'dmg'; d.innerText = `-${val}`; c.appendChild(d);
         setTimeout(() => d.remove(), 800);
     }
-    update();
 </script>
 </body>
 </html>
