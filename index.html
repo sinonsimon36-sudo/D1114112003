@@ -1,1 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>Pixel Hero Quest - 學號 RPG</title>
+    <style>
+        /* 基礎樣式 */
+        body { background: #222; color: #eee; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #game-container { width: 600px; border: 4px solid #555; background: #000; padding: 20px; text-align: center; position: relative; }
+        
+        /* 開始畫面樣式 */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95); z-index: 10;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .logo-placeholder { width: 150px; height: 150px; margin-bottom: 20px; border: 2px dashed #777; line-height: 150px; } /* 這裡之後放你的 Logo 圖 */
+        .title { font-size: 2.5rem; color: #f1c40f; text-shadow: 2px 2px #d35400; margin-bottom: 30px; }
 
+        /* 遊戲介面樣式 */
+        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; color: #0f0; }
+        #enemy-sprite { font-size: 50px; height: 80px; margin: 20px 0; }
+        #log { height: 120px; overflow-y: auto; background: #111; padding: 10px; text-align: left; border: 1px solid #333; font-size: 0.9rem; }
+        
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; background: #444; color: white; border: 2px solid #777; font-weight: bold; }
+        button:hover { background: #e67e22; border-color: #fff; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- 1. 開始畫面 -->
+        <div id="start-screen">
+            <div class="title">PIXEL HERO<br>勇者冒險</div>
+            <!-- 將下方 img src 替換成你的 Logo 檔名 -->
+            <img src="logo.png" alt="Game Logo" class="logo-placeholder" onerror="this.style.display='none';">
+            <div style="color: #888; margin-bottom: 10px;">準備好展開你的像素冒險了嗎？</div>
+            <button onclick="startGame()">開始冒險</button>
+        </div>
+
+        <!-- 2. 遊戲主畫面 -->
+        <div id="main-game" class="hidden">
+            <div class="stats">
+                <div>等級: <span id="lv">1</span></div>
+                <div>HP: <span id="hp">50</span>/50</div>
+                <div>EXP: <span id="exp">0</span>/100</div>
+            </div>
+            <div id="story">💬 你獨自踏入了陰暗的森林...</div>
+            <div id="enemy-sprite">👾</div>
+            <div id="battle-controls">
+                <button onclick="attack()">🗡️ 普通攻擊</button>
+                <button id="skill-btn" onclick="useSkill()" class="hidden">🔥 火球術 (Lv2)</button>
+            </div>
+            <div id="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let player = { lv: 1, hp: 50, maxHp: 50, exp: 0, nextExp: 100, atk: 10 };
+        let enemy = { name: "綠色史萊姆", hp: 30, atk: 5 };
+
+        // 切換畫面函式
+        function startGame() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('main-game').classList.remove('hidden');
+            log("冒險開始了！一隻史萊姆跳了出來！");
+        }
+
+        function updateUI() {
+            document.getElementById('lv').innerText = player.lv;
+            document.getElementById('hp').innerText = player.hp;
+            document.getElementById('exp').innerText = player.exp;
+            if(player.lv >= 2) {
+                document.getElementById('skill-btn').classList.remove('hidden');
+            }
+        }
+
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += `<div>> ${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function attack() {
+            let dmg = player.atk + Math.floor(Math.random() * 5);
+            enemy.hp -= dmg;
+            log(`你揮動長劍，對 ${enemy.name} 造成 ${dmg} 點傷害。`);
+            if (enemy.hp <= 0) { win(); } else { enemyTurn(); }
+        }
+
+        function useSkill() {
+            let dmg = player.atk * 2;
+            player.hp -= 5;
+            enemy.hp -= dmg;
+            log(`🔥 你詠唱咒語，火球術炸裂！造成 ${dmg} 點傷害！(消耗 5 HP)`);
+            if (enemy.hp <= 0) { win(); } else { enemyTurn(); }
+            updateUI();
+        }
+
+        function enemyTurn() {
+            let dmg = enemy.atk + Math.floor(Math.random() * 3);
+            player.hp -= dmg;
+            log(`${enemy.name} 反擊了，你受到了 ${dmg} 點傷害。`);
+            if (player.hp <= 0) { 
+                alert("你倒下了... 勇者的旅程在此終結。");
+                location.reload(); 
+            }
+            updateUI();
+        }
+
+        function win() {
+            log(`🎉 擊敗了 ${enemy.name}！獲得 50 經驗值。`);
+            player.exp += 50;
+            if (player.exp >= player.nextExp) {
+                player.lv++;
+                player.exp = 0;
+                player.atk += 8;
+                player.maxHp += 20;
+                player.hp = player.maxHp;
+                log(`✨ 等級提升！你現在是 Lv.${player.lv}，感覺力量湧現！`);
+            }
+            enemy.hp = 30 + (player.lv * 15);
+            log(`--- 新的敵人出現了 ---`);
+            updateUI();
+        }
+    </script>
+</body>
+</html>
