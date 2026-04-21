@@ -2,43 +2,39 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>勇者傳說 - 黃金史萊姆驚喜版</title>
+    <title>Pixel RPG - 雙敵隨機挑戰版</title>
     <style>
         :root { --gold: #f1c40f; --danger: #ff4757; --primary: #2f3542; }
         body { background: #fff; color: var(--primary); font-family: sans-serif; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { width: 95vw; max-width: 1400px; height: 95vh; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .hidden { display: none !important; }
-
-        /* 狀態列 */
+        #game-container { width: 95vw; max-width: 1500px; height: 95vh; display: flex; flex-direction: column; align-items: center; position: relative; }
+        
         .stats-bar { width: 100%; display: flex; justify-content: space-around; background: #f8f9fa; padding: 15px; font-size: 1.2rem; font-weight: bold; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .gold-display { color: var(--gold); text-shadow: 1px 2px #000; font-size: 1.5rem; }
+        .gold-display { color: var(--gold); text-shadow: 1px 1px #000; }
 
-        /* 戰鬥舞台 */
-        .arena { display: flex; justify-content: center; align-items: flex-end; gap: 50px; width: 100%; height: 400px; margin-top: 20px; }
-        .character-box { width: 350px; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .sprite img { width: 300px; height: auto; image-rendering: pixelated; transition: filter 0.5s, transform 0.2s; }
-        #player-sprite img { transform: scaleX(-1); }
+        /* 戰鬥舞台：調整寬度以容納雙怪 */
+        .arena { display: flex; justify-content: center; align-items: flex-end; gap: 3vw; width: 100%; height: 450px; margin-top: 20px; }
+        .character-box { width: 300px; display: flex; flex-direction: column; align-items: center; position: relative; transition: opacity 0.5s; }
+        .sprite img { width: 100%; height: auto; image-rendering: pixelated; transition: filter 0.5s; }
+        #player-sprite img { transform: scaleX(-1); } /* 勇者翻轉 */
 
-        /* 黃金史萊姆發光特效 */
-        .golden-glow { filter: drop-shadow(0 0 20px #f1c40f) brightness(1.2); animation: shine 1s infinite alternate; }
-        @keyframes shine { from { filter: drop-shadow(0 0 10px #f1c40f) brightness(1.1); } to { filter: drop-shadow(0 0 30px #f1c40f) brightness(1.4); } }
-
-        /* 屬性標籤 */
-        .type-tag { padding: 5px 15px; border-radius: 20px; color: white; font-size: 0.9rem; margin-top: 5px; font-weight: bold; text-transform: uppercase; }
-        .type-gold { background: linear-gradient(45deg, #f1c40f, #f39c12); box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
-        .type-normal { background: #2ed573; }
-        .type-fire { background: #e74c3c; }
-
-        .hp-outer { width: 100%; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 10px; border: 2px solid #ccc; }
+        /* 屬性標籤與血條 */
+        .type-tag { padding: 5px 12px; border-radius: 20px; color: white; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
+        .hp-outer { width: 100%; height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px; border: 2px solid #ccc; }
         .hp-inner { height: 100%; background: var(--danger); width: 100%; transition: width 0.3s; }
         
-        #log { width: 800px; height: 100px; background: #f1f2f6; padding: 15px; margin-top: 15px; overflow-y: auto; font-size: 1.1rem; border-radius: 10px; text-align: left; }
+        #log { width: 850px; height: 100px; background: #f1f2f6; padding: 15px; margin-top: 15px; overflow-y: auto; font-size: 1rem; border-radius: 10px; text-align: left; }
         .btns { margin-top: 15px; display: flex; gap: 15px; }
-        button { padding: 12px 40px; font-size: 1.3rem; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background: var(--primary); color: #fff; transition: 0.2s; }
-        button:hover:not(:disabled) { transform: translateY(-3px); background: #57606f; }
+        button { padding: 12px 40px; font-size: 1.3rem; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background: var(--primary); color: #fff; }
         
-        .dmg-text { position: absolute; top: -20px; font-size: 3.5rem; font-weight: bold; color: red; animation: floatUp 0.8s forwards; pointer-events: none; z-index: 10; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-120px); } }
+        .dmg-text { position: absolute; top: 0; font-size: 2.5rem; font-weight: bold; color: red; animation: floatUp 0.8s forwards; pointer-events: none; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
+        .hidden { display: none !important; }
+        .dead { opacity: 0.3; }
+        
+        /* 標籤顏色定義 */
+        .t-normal { background: #2ed573; } .t-fire { background: #e74c3c; } .t-water { background: #3498db; }
+        .t-electric { background: #f1c40f; color: #000; } .t-gold { background: #d4af37; animation: shine 1s infinite; }
+        @keyframes shine { from { opacity: 0.8; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -46,140 +42,171 @@
 <div id="game-container">
     <div class="stats-bar">
         <div>🛡️ 等級: <span id="lv">1</span></div>
-        <div class="gold-display">💰 <span id="gold-count">0</span> G</div>
-        <div id="area-info">📍 探索地區：冒險平原</div>
+        <div class="gold-display">💰 <span id="gold">0</span> G</div>
+        <div id="mode-text">📍 冒險區域：平原邊境</div>
         <div>⭐ 經驗: <span id="exp">0</span>/100</div>
     </div>
 
     <div class="arena">
+        <!-- 勇者 -->
         <div class="character-box">
             <div id="p-dmg"></div>
             <div class="sprite" id="player-sprite"><img src="pixel_adventurer.png"></div>
-            <div style="font-weight:bold; margin-top:10px; font-size: 1.5rem;">勇者 (HP: <span id="hp">100</span>)</div>
+            <div style="font-weight:bold; margin-top:10px;">勇者 (<span id="hp">100</span>)</div>
             <div class="hp-outer"><div id="hp-bar" class="hp-inner"></div></div>
         </div>
 
-        <div class="character-box">
-            <div id="e-dmg"></div>
-            <div class="sprite" id="enemy-sprite"><img src="pixel_slime.png" id="e-img"></div>
-            <div id="e-tag" class="type-tag">普通</div>
-            <div style="font-weight:bold; margin-top:10px; font-size: 1.5rem;"><span id="e-name">史萊姆</span> (HP: <span id="e-hp">50</span>)</div>
-            <div class="hp-outer"><div id="e-hp-bar" class="hp-inner"></div></div>
+        <!-- 史萊姆 A (主怪) -->
+        <div class="character-box" id="e1-box">
+            <div id="e1-dmg"></div>
+            <div class="sprite"><img src="pixel_slime.png" id="e1-img"></div>
+            <div id="e1-tag" class="type-tag t-normal">普通</div>
+            <div style="font-weight:bold; margin-top:10px;"><span id="e1-name">史萊姆A</span></div>
+            <div class="hp-outer"><div id="e1-hp-bar" class="hp-inner"></div></div>
+        </div>
+
+        <!-- 史萊姆 B (後期隨機出現) -->
+        <div class="character-box hidden" id="e2-box">
+            <div id="e2-dmg"></div>
+            <div class="sprite"><img src="pixel_slime.png" id="e2-img"></div>
+            <div id="e2-tag" class="type-tag t-normal">普通</div>
+            <div style="font-weight:bold; margin-top:10px;"><span id="e2-name">史萊姆B</span></div>
+            <div class="hp-outer"><div id="e2-hp-bar" class="hp-inner"></div></div>
         </div>
     </div>
 
-    <div id="log">> 勇者整理了裝備，準備出發...</div>
-    
-    <div class="btns">
-        <button id="atk-btn" onclick="handleBattle()">🗡️ 普通攻擊</button>
-    </div>
+    <div id="log">> 準備開始冒險...</div>
+    <div class="btns"><button id="atk-btn" onclick="handleBattle()">🗡️ 揮劍攻擊</button></div>
 </div>
 
 <script>
     let p = { lv: 1, hp: 100, mhp: 100, atk: 25, gold: 0, exp: 0, busy: false };
-    let e = {};
-    let winCount = 0;
-
-    const slimeTypes = [
-        { name: "普通史萊姆", type: "normal", color: "none", hpM: 1, atkM: 1, goldM: 1, expM: 1, chance: 70 },
-        { name: "火炎史萊姆", type: "fire", color: "hue-rotate(0deg) saturate(2)", hpM: 1.2, atkM: 1.6, goldM: 1.5, expM: 1.5, chance: 20 },
-        { name: "黃金史萊姆", type: "gold", color: "sepia(1) saturate(10) brightness(1.2)", hpM: 4.0, atkM: 0.5, goldM: 15.0, expM: 10.0, chance: 10 }
+    let enemyList = [];
+    
+    const slimeLib = [
+        { n: "綠史萊姆", t: "normal", c: "none", h: 1, a: 1, g: 1 },
+        { n: "紅火史萊姆", t: "fire", c: "hue-rotate(0deg) saturate(2.5)", h: 1.2, a: 1.6, g: 1.5 },
+        { n: "水藍史萊姆", t: "water", c: "hue-rotate(190deg)", h: 1.8, a: 0.9, g: 1.2 },
+        { n: "閃電史萊姆", t: "electric", c: "hue-rotate(60deg) brightness(1.5)", h: 0.9, a: 2.2, g: 2.5 },
+        { n: "黃金史萊姆", t: "gold", c: "sepia(1) saturate(8) brightness(1.2)", h: 5.0, a: 0.5, g: 20.0 }
     ];
 
     async function handleBattle() {
         if (p.busy) return; p.busy = true;
         
+        // 玩家攻擊邏輯：優先攻擊血最多的怪或第一隻怪
+        let targets = enemyList.filter(e => e.hp > 0);
+        if (targets.length === 0) return;
+        
+        let target = targets[0]; 
         let dmg = p.atk + Math.floor(Math.random() * 10);
-        e.hp -= dmg;
-        popDmg('e-dmg', dmg);
-        move('player-sprite', 60);
-        log(`🗡️ 你對 ${e.name} 造成了 ${dmg} 點傷害。`);
+        target.hp -= dmg;
+        pop(`e${target.id}-dmg`, dmg);
+        move('player-sprite', 40);
+        log(`🗡️ 你攻擊 ${target.name}，造成了 ${dmg} 點傷害。`);
         updateUI();
 
         await sleep(600);
 
-        if (e.hp <= 0) {
-            let dropG = Math.floor((15 + p.lv * 5) * e.goldM);
-            let dropE = Math.floor(50 * e.expM);
-            p.gold += dropG; p.exp += dropE;
-            
-            log(`🎉 擊敗了 ${e.name}！`);
-            log(`💰 獲得金幣: ${dropG} G / ⭐ 獲得經驗: ${dropE}`);
-
-            if (p.exp >= 100) {
-                p.lv++; p.exp = 0; p.mhp += 40; p.hp = p.mhp; p.atk += 12;
-                log(`✨ 等級提升至 Lv.${p.lv}！體力已完全恢復！`);
-            }
-            winCount++;
+        // 檢查是否全滅
+        if (enemyList.every(e => e.hp <= 0)) {
+            let totalGold = enemyList.reduce((sum, e) => sum + e.goldDrop, 0);
+            p.gold += totalGold; p.exp += 50;
+            log(`🎉 勝利！獲得了共 ${totalGold} 金幣。`);
+            if (p.exp >= 100) { p.lv++; p.exp = 0; p.mhp += 30; p.hp = p.mhp; p.atk += 10; log("✨ 等級提升！"); }
             await sleep(1000);
-            spawnNewEnemy();
+            spawn();
         } else {
-            let edmg = e.atk + Math.floor(Math.random() * 5);
-            p.hp -= edmg;
-            popDmg('p-dmg', edmg);
-            move('enemy-sprite', -60);
-            log(`💥 ${e.name} 反擊，造成了 ${edmg} 點傷害。`);
-            updateUI();
-            if (p.hp <= 0) { alert("戰敗！勇者回村治療中..."); location.reload(); }
+            // 敵人輪流反擊
+            for (let e of enemyList) {
+                if (e.hp > 0) {
+                    let edmg = e.atk + Math.floor(Math.random() * 5);
+                    p.hp -= edmg;
+                    pop('p-dmg', edmg);
+                    move(e.id === 1 ? 'e1-img' : 'e2-img', -40, true);
+                    log(`${e.name} 反擊，造成 ${edmg} 點傷害。`);
+                    updateUI();
+                    await sleep(400);
+                }
+            }
+            if (p.hp <= 0) { alert("戰敗！"); location.reload(); }
         }
         p.busy = false;
     }
 
-    function spawnNewEnemy() {
-        // 隨機抽取，黃金史萊姆機率較低
-        let roll = Math.random() * 100;
-        let t;
-        if (roll < 10) t = slimeTypes[2]; // 黃金 (10%)
-        else if (roll < 30) t = slimeTypes[1]; // 火炎 (20%)
-        else t = slimeTypes[0]; // 普通 (70%)
-
-        e = {
-            name: t.name,
-            hp: Math.floor((50 + p.lv * 15) * t.hpM),
-            mhp: Math.floor((50 + p.lv * 15) * t.hpM),
-            atk: Math.floor((10 + p.lv * 4) * t.atkM),
-            goldM: t.goldM,
-            expM: t.expM,
-            type: t.type
-        };
-
-        const img = document.getElementById('e-img');
-        img.style.filter = t.color;
-        if(t.type === 'gold') {
-            img.classList.add('golden-glow');
-            log("✨ 【稀有出現】你遇到了一隻閃閃發光的黃金史萊姆！");
+    function spawn() {
+        enemyList = [];
+        const isDouble = (p.lv >= 5 && Math.random() < 0.4); // Lv5後 40% 機率出雙怪
+        
+        // 生成第一隻怪
+        enemyList.push(createEnemyData(1));
+        
+        // 如果觸發雙怪
+        if (isDouble) {
+            enemyList.push(createEnemyData(2));
+            document.getElementById('e2-box').classList.remove('hidden');
+            document.getElementById('mode-text').innerText = "📍 區域：危險森林 (雙敵出現!)";
         } else {
-            img.classList.remove('golden-glow');
+            document.getElementById('e2-box').classList.add('hidden');
+            document.getElementById('mode-text').innerText = "📍 區域：平原邊境";
         }
         
-        const tag = document.getElementById('e-tag');
-        tag.className = `type-tag type-${t.type}`;
-        tag.innerText = t.name.replace("史萊姆", "");
+        // 更新視覺
+        enemyList.forEach(e => {
+            const img = document.getElementById(`e${e.id}-img`);
+            img.style.filter = e.color;
+            const tag = document.getElementById(`e${e.id}-tag`);
+            tag.className = `type-tag t-${e.type}`;
+            tag.innerText = e.typeName;
+            document.getElementById(`e${e.id}-name`).innerText = e.name;
+        });
         
+        log(`出現了 ${enemyList.length} 隻史萊姆！`);
         updateUI();
+    }
+
+    function createEnemyData(id) {
+        let t = slimeLib[Math.floor(Math.random() * slimeLib.length)];
+        return {
+            id: id,
+            name: (id === 1 ? "史萊姆A" : "史萊姆B"),
+            typeName: t.n.replace("史萊姆", ""),
+            type: t.t,
+            color: t.c,
+            hp: Math.floor((40 + p.lv * 10) * t.h),
+            mhp: Math.floor((40 + p.lv * 10) * t.h),
+            atk: Math.floor((8 + p.lv * 2) * t.a),
+            goldDrop: Math.floor((15 + p.lv * 5) * t.g)
+        };
     }
 
     function updateUI() {
         document.getElementById('lv').innerText = p.lv;
         document.getElementById('hp').innerText = Math.max(0, p.hp);
         document.getElementById('hp-bar').style.width = (p.hp / p.mhp * 100) + "%";
-        document.getElementById('gold-count').innerText = p.gold;
+        document.getElementById('gold').innerText = p.gold;
         document.getElementById('exp').innerText = p.exp;
-        document.getElementById('e-hp').innerText = Math.max(0, e.hp);
-        document.getElementById('e-hp-bar').style.width = (e.hp / e.mhp * 100) + "%";
-        document.getElementById('e-name').innerText = e.name;
+        enemyList.forEach(e => {
+            const bar = document.getElementById(`e${e.id}-hp-bar`);
+            if (bar) bar.style.width = (Math.max(0, e.hp) / e.mhp * 100) + "%";
+            document.getElementById(`e${e.id}-box`).classList.toggle('dead', e.hp <= 0);
+        });
     }
 
     function log(m) { const l = document.getElementById('log'); l.innerHTML += `<div>> ${m}</div>`; l.scrollTop = l.scrollHeight; }
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-    function move(id, x) { const el = document.getElementById(id); el.style.transform = `translateX(${x}px)`; setTimeout(() => el.style.transform = 'none', 200); }
-    function popDmg(id, v) {
+    function move(id, x, isImg = false) { 
+        const el = isImg ? document.getElementById(id) : document.getElementById(id); 
+        el.style.transform = `translateX(${x}px)`; 
+        setTimeout(() => el.style.transform = 'none', 200); 
+    }
+    function pop(id, v) {
         const c = document.getElementById(id); const d = document.createElement('div');
         d.className = 'dmg-text'; d.innerText = `-${v}`; c.appendChild(d);
         setTimeout(() => d.remove(), 800);
     }
     
-    spawnNewEnemy();
+    spawn();
 </script>
 </body>
 </html>
