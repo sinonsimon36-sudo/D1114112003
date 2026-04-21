@@ -2,128 +2,223 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>Pixel Hero Quest - 學號 RPG</title>
+    <title>Pixel RPG - 學號專案</title>
     <style>
-        /* 基礎樣式 */
-        body { background: #222; color: #eee; font-family: 'Courier New', Courier, monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        #game-container { width: 600px; border: 4px solid #555; background: #000; padding: 20px; text-align: center; position: relative; }
+        body { background: #1a1a1a; color: #eee; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        #game-container { width: 600px; border: 4px solid #444; background: #000; padding: 20px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         
-        /* 開始畫面樣式 */
-        #start-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.95); z-index: 10;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .logo-placeholder { width: 150px; height: 150px; margin-bottom: 20px; border: 2px dashed #777; line-height: 150px; } /* 這裡之後放你的 Logo 圖 */
-        .title { font-size: 2.5rem; color: #f1c40f; text-shadow: 2px 2px #d35400; margin-bottom: 30px; }
-
-        /* 遊戲介面樣式 */
-        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; color: #0f0; }
-        #enemy-sprite { font-size: 50px; height: 80px; margin: 20px 0; }
-        #log { height: 120px; overflow-y: auto; background: #111; padding: 10px; text-align: left; border: 1px solid #333; font-size: 0.9rem; }
-        
-        button { padding: 10px 20px; margin: 10px; cursor: pointer; background: #444; color: white; border: 2px solid #777; font-weight: bold; }
-        button:hover { background: #e67e22; border-color: #fff; }
         .hidden { display: none !important; }
+        
+        /* 開始畫面 */
+        #start-screen img { width: 300px; height: auto; margin-bottom: 20px; image-rendering: pixelated; }
+        
+        /* 戰鬥畫面 */
+        .stats-bar { display: flex; justify-content: space-between; color: #0f0; margin-bottom: 10px; font-weight: bold; }
+        .battle-arena { display: flex; justify-content: space-around; align-items: center; height: 200px; background: #222; border: 2px solid #333; margin: 15px 0; position: relative; }
+        .entity { width: 120px; transition: transform 0.2s; }
+        .entity img { width: 100%; image-rendering: pixelated; }
+
+        /* 重要：水平翻轉勇者圖片，使其面向右側怪物 */
+        #player-sprite img {
+            transform: scaleX(-1);
+        }
+        
+        /* 血條系統 */
+        .hp-container { width: 100px; height: 10px; background: #500; border: 1px solid #000; margin-top: 5px; }
+        .hp-fill { height: 100%; background: #f00; transition: width 0.3s; }
+        
+        #log { height: 100px; overflow-y: auto; background: #111; padding: 10px; text-align: left; border: 1px solid #333; font-size: 14px; color: #bbb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; background: #333; color: #fff; border: 2px solid #666; font-family: inherit; font-weight: bold; }
+        button:hover:not(:disabled) { background: #555; border-color: #f1c40f; color: #f1c40f; }
+        button:disabled { color: #666; cursor: not-allowed; }
+        
+        .boss-warning { color: #ff3e3e; font-weight: bold; animation: blink 0.5s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <!-- 1. 開始畫面 -->
-        <div id="start-screen">
-            <div class="title">PIXEL HERO<br>勇者冒險</div>
-            <!-- 將下方 img src 替換成你的 Logo 檔名 -->
-            <img src="logo.png" alt="Game Logo" class="logo-placeholder" onerror="this.style.display='none';">
-            <div style="color: #888; margin-bottom: 10px;">準備好展開你的像素冒險了嗎？</div>
-            <button onclick="startGame()">開始冒險</button>
-        </div>
-
-        <!-- 2. 遊戲主畫面 -->
-        <div id="main-game" class="hidden">
-            <div class="stats">
-                <div>等級: <span id="lv">1</span></div>
-                <div>HP: <span id="hp">50</span>/50</div>
-                <div>EXP: <span id="exp">0</span>/100</div>
-            </div>
-            <div id="story">💬 你獨自踏入了陰暗的森林...</div>
-            <div id="enemy-sprite">👾</div>
-            <div id="battle-controls">
-                <button onclick="attack()">🗡️ 普通攻擊</button>
-                <button id="skill-btn" onclick="useSkill()" class="hidden">🔥 火球術 (Lv2)</button>
-            </div>
-            <div id="log"></div>
-        </div>
+<div id="game-container">
+    <!-- 1. 開始畫面 -->
+    <div id="start-screen">
+        <img src="pixel_art_rpg_logo.png" alt="遊戲標題圖">
+        <div style="font-size: 24px; color: #f1c40f; margin-bottom: 20px;">勇者試煉：像素之魂</div>
+        <button onclick="startGame()">開始旅程</button>
     </div>
 
-    <script>
-        let player = { lv: 1, hp: 50, maxHp: 50, exp: 0, nextExp: 100, atk: 10 };
-        let enemy = { name: "綠色史萊姆", hp: 30, atk: 5 };
+    <!-- 2. 遊戲主畫面 -->
+    <div id="main-game" class="hidden">
+        <div class="stats-bar">
+            <div>LV: <span id="lv">1</span></div>
+            <div>EXP: <span id="exp">0</span>/100</div>
+            <div id="stage-info" style="color: #fff;">森林深處</div>
+        </div>
 
-        // 切換畫面函式
-        function startGame() {
-            document.getElementById('start-screen').classList.add('hidden');
-            document.getElementById('main-game').classList.remove('hidden');
-            log("冒險開始了！一隻史萊姆跳了出來！");
-        }
+        <div class="battle-arena">
+            <!-- 勇者 (已翻轉面向右) -->
+            <div>
+                <img src="pixel_adventurer.png"></div>
+                <div style="margin-top:5px;">勇者 (HP: <span id="hp">100</span>)</div>
+                <div class="hp-container"><div id="hp-bar" class="hp-fill" style="width: 100%;"></div></div>
+            </div>
+            <!-- 怪物 (面向左) -->
+            <div>
+                <img src="pixel_slime.png" id="enemy-img"></div>
+                <div style="margin-top:5px;"><span id="enemy-name">史萊姆</span> (HP: <span id="e-hp">40</span>)</div>
+                <div class="hp-container"><div id="e-hp-bar" class="hp-fill" style="width: 100%;"></div></div>
+            </div>
+        </div>
 
-        function updateUI() {
-            document.getElementById('lv').innerText = player.lv;
-            document.getElementById('hp').innerText = player.hp;
-            document.getElementById('exp').innerText = player.exp;
-            if(player.lv >= 2) {
-                document.getElementById('skill-btn').classList.remove('hidden');
-            }
-        }
+        <div id="log">> 準備戰鬥！</div>
 
-        function log(msg) {
-            const logDiv = document.getElementById('log');
-            logDiv.innerHTML += `<div>> ${msg}</div>`;
-            logDiv.scrollTop = logDiv.scrollHeight;
-        }
+        <div id="battle-controls" style="margin-top: 15px;">
+            <button id="atk-btn" onclick="handleTurn('attack')">🗡️ 普通攻擊</button>
+            <button id="skill-btn" onclick="handleTurn('skill')" class="hidden">🔥 火球術 (耗5HP)</button>
+        </div>
+    </div>
+</div>
 
-        function attack() {
+<script>
+    let player = { lv: 1, hp: 100, maxHp: 100, exp: 0, nextExp: 100, atk: 15, isTurn: true };
+    let enemy = { name: "史萊姆", hp: 40, maxHp: 40, atk: 8, isBoss: false };
+    let battleCount = 1;
+
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('main-game').classList.remove('hidden');
+        updateUI();
+    }
+
+    async function handleTurn(type) {
+        if (!player.isTurn) return;
+        player.isTurn = false;
+        toggleButtons(false);
+
+        // --- 玩家回合 ---
+        if (type === 'attack') {
             let dmg = player.atk + Math.floor(Math.random() * 5);
             enemy.hp -= dmg;
-            log(`你揮動長劍，對 ${enemy.name} 造成 ${dmg} 點傷害。`);
-            if (enemy.hp <= 0) { win(); } else { enemyTurn(); }
-        }
-
-        function useSkill() {
-            let dmg = player.atk * 2;
+            animate('player-sprite', 'translateX(30px)'); // 向右衝刺攻擊
+            log(`你揮劍砍向 ${enemy.name}，造成 ${dmg} 點傷害。`);
+        } else if (type === 'skill') {
+            let dmg = Math.floor(player.atk * 2.5);
             player.hp -= 5;
             enemy.hp -= dmg;
-            log(`🔥 你詠唱咒語，火球術炸裂！造成 ${dmg} 點傷害！(消耗 5 HP)`);
-            if (enemy.hp <= 0) { win(); } else { enemyTurn(); }
-            updateUI();
+            animate('player-sprite', 'scale(1.2)'); // 蓄力效果
+            log(`🔥 你燃燒生命施放火球術！對 ${enemy.name} 造成 ${dmg} 點鉅額傷害！`);
         }
 
-        function enemyTurn() {
-            let dmg = enemy.atk + Math.floor(Math.random() * 3);
-            player.hp -= dmg;
-            log(`${enemy.name} 反擊了，你受到了 ${dmg} 點傷害。`);
-            if (player.hp <= 0) { 
-                alert("你倒下了... 勇者的旅程在此終結。");
-                location.reload(); 
-            }
-            updateUI();
+        updateUI();
+        await sleep(800);
+
+        if (enemy.hp <= 0) {
+            await win();
+            player.isTurn = true;
+            toggleButtons(true);
+            return;
         }
 
-        function win() {
-            log(`🎉 擊敗了 ${enemy.name}！獲得 50 經驗值。`);
-            player.exp += 50;
-            if (player.exp >= player.nextExp) {
-                player.lv++;
-                player.exp = 0;
-                player.atk += 8;
-                player.maxHp += 20;
-                player.hp = player.maxHp;
-                log(`✨ 等級提升！你現在是 Lv.${player.lv}，感覺力量湧現！`);
-            }
-            enemy.hp = 30 + (player.lv * 15);
-            log(`--- 新的敵人出現了 ---`);
-            updateUI();
+        // --- 怪物回合 ---
+        animate('enemy-sprite', 'translateX(-30px)'); // 向左衝刺反擊
+        let eDmg = enemy.atk + Math.floor(Math.random() * 4);
+        player.hp -= eDmg;
+        log(`${enemy.name} 發動反擊，你受到了 ${eDmg} 點傷害。`);
+        
+        updateUI();
+        await sleep(600);
+
+        if (player.hp <= 0) {
+            alert("你戰敗了... 勇者的旅程結束。");
+            location.reload();
         }
-    </script>
+
+        player.isTurn = true;
+        toggleButtons(true);
+    }
+
+    async function win() {
+        log(`🎉 勝利！你擊敗了 ${enemy.name}！`);
+        let gainExp = enemy.isBoss ? 150 : 50;
+        player.exp += gainExp;
+        log(`獲得了 ${gainExp} 點經驗值。`);
+
+        if (player.exp >= player.nextExp) {
+            player.lv++;
+            player.exp = 0;
+            player.maxHp += 30;
+            player.hp = player.maxHp;
+            player.atk += 10;
+            log(`✨ 等級提升！你現在是 Lv.${player.lv}，屬性獲得強化！`);
+        }
+
+        battleCount++;
+        await sleep(1000);
+        spawnEnemy();
+    }
+
+    function spawnEnemy() {
+        if (battleCount % 5 === 0) {
+            enemy = {
+                name: "🔥 魔王史萊姆 BOSS",
+                hp: 200 + (player.lv * 50),
+                maxHp: 200 + (player.lv * 50),
+                atk: 20 + (player.lv * 5),
+                isBoss: true
+            };
+            document.getElementById('stage-info').innerHTML = `<span class="boss-warning">⚠️ BOSS 出現 ⚠️</span>`;
+            document.getElementById('enemy-img').style.filter = "hue-rotate(90deg) saturate(2)"; 
+            document.getElementById('enemy-img').style.transform = "scale(1.5)";
+        } else {
+            enemy = {
+                name: "野外史萊姆",
+                hp: 40 + (player.lv * 15),
+                maxHp: 40 + (player.lv * 15),
+                atk: 8 + (player.lv * 3),
+                isBoss: false
+            };
+            document.getElementById('stage-info').innerText = "森林深處";
+            document.getElementById('enemy-img').style.filter = "none";
+            document.getElementById('enemy-img').style.transform = "scale(1)";
+        }
+        log(`新的 ${enemy.name} 出現了！`);
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('lv').innerText = player.lv;
+        document.getElementById('hp').innerText = player.hp < 0 ? 0 : player.hp;
+        document.getElementById('hp-bar').style.width = (player.hp / player.maxHp * 100) + "%";
+        
+        document.getElementById('exp').innerText = player.exp;
+        document.getElementById('e-hp').innerText = enemy.hp < 0 ? 0 : enemy.hp;
+        document.getElementById('e-hp-bar').style.width = (enemy.hp / enemy.maxHp * 100) + "%";
+        document.getElementById('enemy-name').innerText = enemy.name;
+
+        if(player.lv >= 2) document.getElementById('skill-btn').classList.remove('hidden');
+    }
+
+    function log(msg) {
+        const logDiv = document.getElementById('log');
+        logDiv.innerHTML += `<div>> ${msg}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function toggleButtons(enabled) {
+        document.getElementById('atk-btn').disabled = !enabled;
+        document.getElementById('skill-btn').disabled = !enabled;
+    }
+
+    function animate(id, transformValue) {
+        const el = document.getElementById(id);
+        el.style.transform = transformValue;
+        // 動畫結束後歸位
+        setTimeout(() => {
+            el.style.transform = 'translate(0) scale(1)';
+        }, 200);
+    }
+
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+</script>
+
 </body>
 </html>
