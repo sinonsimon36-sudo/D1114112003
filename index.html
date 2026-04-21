@@ -2,249 +2,186 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel RPG - 螢幕自適應最終版</title>
+    <title>Pixel RPG - 1080p 最終優化版</title>
     <style>
-        :root {
-            --primary-color: #2f3542;
-            --danger-color: #ff4757;
-            --bg-white: #ffffff;
-        }
-
         body { 
-            background: var(--bg-white); 
-            color: var(--primary-color); 
-            font-family: 'Segoe UI', "微軟正黑體", sans-serif; 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow-x: hidden; /* 禁止左右捲軸，防止破圖 */
+            background: #ffffff; color: #333; margin: 0; 
+            font-family: sans-serif; display: flex; flex-direction: column; align-items: center;
+            height: 100vh; overflow: hidden;
         }
 
         #game-container { 
-            width: 98vw; 
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            padding: 10px;
-            box-sizing: border-box;
+            width: 95vw; height: 98vh; display: flex; flex-direction: column; justify-content: space-around;
         }
 
-        /* 頂部狀態列：縮小高度以騰出空間給圖片 */
-        .header-bar { 
-            display: flex; 
-            justify-content: space-around; 
-            background: #f8f9fa;
-            padding: 8px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border-radius: 10px;
+        /* 頂部 UI 放大 */
+        .header { 
+            display: flex; justify-content: space-around; font-size: 2.5rem; font-weight: bold;
+            padding: 10px; background: #f0f0f0; border-radius: 15px;
         }
 
-        /* 核心修正：強制並排且高度自適應 */
-        .battle-arena { 
-            flex: 1; /* 自動填滿剩餘空間 */
-            display: flex; 
-            flex-direction: row; 
-            flex-wrap: nowrap; /* 強制不換行 */
-            justify-content: center; 
-            align-items: flex-end; 
-            gap: 2vw; 
-            margin: 10px 0;
-            max-height: 60vh; /* 限制圖片區域最高佔螢幕 60% */
+        /* 核心：限制圖片區域，不讓圖片撐爆螢幕 */
+        .stage { 
+            display: flex; justify-content: center; align-items: flex-end; gap: 5vw;
+            height: 50vh; /* 限制戰鬥區域高度佔螢幕一半 */
         }
 
-        /* 每一張角色圖片佔螢幕寬度的 45% */
-        .entity-box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 45vw; 
-            max-width: 600px; /* 防止在大螢幕過度放大 */
-            position: relative;
+        .entity { 
+            width: 40vw; /* 限制寬度佔螢幕 40% */
+            max-width: 600px; text-align: center; position: relative;
         }
 
-        .entity { width: 100%; }
         .entity img { 
-            width: 100%; 
-            height: auto; 
-            max-height: 50vh; /* 確保圖片高度不超過螢幕一半 */
-            object-fit: contain; 
-            image-rendering: pixelated; 
+            width: 100%; height: auto; max-height: 40vh; /* 強制圖片高度不超過螢幕 40% */
+            image-rendering: pixelated; object-fit: contain;
         }
 
         /* 勇者水平翻轉 */
         #player-sprite img { transform: scaleX(-1); }
 
-        /* 血條與文字資訊 */
-        .hp-bar-container { 
-            width: 100%; 
-            height: 15px; 
-            background: #eee; 
-            border-radius: 10px; 
-            overflow: hidden;
-            margin-top: 5px;
+        /* 血條與文字 UI 放大 */
+        .hp-box { 
+            width: 100%; height: 35px; background: #eee; border: 3px solid #ccc; 
+            border-radius: 20px; overflow: hidden; margin-top: 15px;
         }
-        .hp-bar-fill { height: 100%; background: var(--danger-color); width: 100%; transition: width 0.3s; }
-        .info-text { font-size: 1.1rem; font-weight: bold; margin-top: 5px; }
+        .hp-bar { height: 100%; background: #ff4757; width: 100%; transition: width 0.3s; }
+        .label { font-size: 2rem; font-weight: bold; margin-top: 10px; }
 
-        /* 遊戲日誌區 */
-        #log-window { 
-            height: 80px; 
-            background: #f1f2f6; 
-            padding: 10px;
-            font-size: 1rem;
-            overflow-y: auto;
-            border-radius: 5px;
-            text-align: left;
-            margin: 5px 0;
+        /* 遊戲日誌與按鈕 UI 放大 */
+        #log { 
+            height: 120px; background: #f9f9f9; padding: 15px; font-size: 1.8rem;
+            border: 2px solid #ddd; overflow-y: auto; text-align: left; width: 80%; margin: 0 auto;
         }
 
-        /* 控制按鈕 */
-        .btn-group { padding-bottom: 10px; }
+        .btns { margin: 20px 0; display: flex; justify-content: center; gap: 30px; }
         button { 
-            padding: 10px 30px; 
-            font-size: 1.2rem; 
-            font-weight: bold; 
-            cursor: pointer;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
+            padding: 20px 60px; font-size: 2rem; font-weight: bold; cursor: pointer;
+            background: #2f3542; color: white; border: none; border-radius: 15px;
         }
-        button:disabled { opacity: 0.5; }
+        button:disabled { opacity: 0.3; }
 
-        /* 傷害飄字動畫 */
-        .dmg-popup {
-            position: absolute;
-            top: 20%;
-            font-size: 2rem;
-            color: red;
-            font-weight: bold;
-            animation: float 0.8s forwards;
-        }
-        @keyframes float { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-50px); } }
+        /* 傷害飄字 */
+        .dmg { position: absolute; top: 0; color: red; font-size: 4rem; font-weight: bold; animation: f 0.8s forwards; }
+        @keyframes f { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div class="header-bar">
-        <div>LV: <span id="lv">1</span></div>
-        <div id="stage-info">📍 平原森林</div>
-        <div>EXP: <span id="exp">0</span>/100</div>
+    <div class="header">
+        <div>等級: <span id="lv">1</span></div>
+        <div>地區: 平原森林</div>
+        <div>經驗: <span id="exp">0</span>/100</div>
     </div>
 
-    <div class="battle-arena">
-        <!-- 勇者方 -->
+    <div class="stage">
+        <!-- 玩家 -->
         
-            <div id="player-dmg-pos"></div>
-            <img src="pixel_adventurer.png"></div>
-            <div class="info-text">勇者 (<span id="hp">100</span>/100)</div>
-            <div class="hp-bar-container"><div id="hp-bar" class="hp-bar-fill"></div></div>
+            <div id="p-dmg-pos"></div>
+            <div id="player-sprite"><img src="pixel_adventurer.png"></div>
+            <div class="label">勇者 (HP: <span id="hp">100</span>)</div>
+            <div class="hp-box"><div id="hp-bar" class="hp-bar"></div></div>
         </div>
         
-        <!-- 怪物方 -->
+        <!-- 敵人 -->
         
-            <div id="enemy-dmg-pos"></div>
-            <img src="pixel_slime.png" id="enemy-img"></div>
-            <div class="info-text"><span id="enemy-name">史萊姆</span> (HP: <span id="e-hp">40</span>)</div>
-            <div class="hp-container hp-bar-container"><div id="e-hp-bar" class="hp-bar-fill"></div></div>
+            <div id="e-dmg-pos"></div>
+            <div id="enemy-sprite"><img src="pixel_slime.png" id="e-img"></div>
+            <div class="label"><span id="e-name">史萊姆</span> (HP: <span id="e-hp">40</span>)</div>
+            <div class="hp-box"><div id="e-hp-bar" class="hp-bar"></div></div>
         </div>
     </div>
 
-    <div id="log-window"></div>
+    <div id="log">> 準備戰鬥！</div>
 
-    <div class="btn-group">
-        <button id="atk-btn" onclick="handleTurn('attack')">🗡️ 普通攻擊</button>
-        <button id="skill-btn" class="hidden" onclick="handleTurn('skill')">🔥 火球術</button>
+    <div class="btns">
+        <button id="atk" onclick="battle('attack')">🗡️ 普通攻擊</button>
+        <button id="skl" class="hidden" onclick="battle('skill')">🔥 火球術</button>
     </div>
 </div>
 
 <script>
-    let player = { lv: 1, hp: 100, maxHp: 100, atk: 15, exp: 0, isTurn: true };
-    let enemy = { name: "史萊姆", hp: 40, maxHp: 40, atk: 10 };
-    let battleCount = 1;
+    let p = { lv: 1, hp: 100, mHp: 100, atk: 15, exp: 0, busy: false };
+    let e = { name: "史萊姆", hp: 40, mHp: 40, atk: 10 };
+    let winCount = 0;
 
-    async function handleTurn(type) {
-        if (!player.isTurn) return;
-        player.isTurn = false;
-        toggleBtns(false);
+    async function battle(type) {
+        if (p.busy) return;
+        p.busy = true;
+        document.getElementById('atk').disabled = true;
+        document.getElementById('skl').disabled = true;
 
-        // 玩家攻擊
-        let dmg = (type === 'attack') ? player.atk + r(5) : player.atk * 2.5;
-        if(type==='skill') player.hp -= 5;
-        enemy.hp -= Math.floor(dmg);
-        showDmg('enemy-dmg-pos', Math.floor(dmg));
+        // --- 玩家回合 ---
+        let dmg = type === 'attack' ? p.atk + r(5) : p.atk * 2.5;
+        if(type === 'skill') p.hp -= 5;
+        e.hp -= Math.floor(dmg);
+        
+        showDmg('e-dmg-pos', Math.floor(dmg));
         animate('player-sprite', 50);
-        log(`你對 ${enemy.name} 造成 ${Math.floor(dmg)} 點傷害。`);
-        updateUI();
+        log(`你攻擊了，造成 ${Math.floor(dmg)} 點傷害！`);
+        update();
 
         await sleep(800);
-        if (enemy.hp <= 0) { await win(); } 
-        else {
-            // 敵人反擊
+        if (e.hp <= 0) {
+            log(`🎉 擊敗了 ${e.name}！`);
+            p.exp += 50;
+            if(p.exp >= 100) { p.lv++; p.exp=0; p.atk+=10; p.mHp+=30; p.hp=p.mHp; log("✨ 等級提升！"); }
+            winCount++;
+            await sleep(1000);
+            spawn();
+        } else {
+            // --- 敵人回合 ---
             animate('enemy-sprite', -50);
-            let edmg = enemy.atk + r(3);
-            player.hp -= edmg;
-            showDmg('player-dmg-pos', edmg);
-            log(`${enemy.name} 反擊，造成 ${edmg} 點傷害。`);
-            updateUI();
-            if (player.hp <= 0) { alert("冒險結束！"); location.reload(); }
+            let edmg = e.atk + r(5);
+            p.hp -= edmg;
+            showDmg('p-dmg-pos', edmg);
+            log(`${e.name} 反擊，造成 ${edmg} 點傷害。`);
+            update();
+            if (p.hp <= 0) { alert("戰敗！"); location.reload(); }
         }
-        player.isTurn = true;
-        toggleBtns(true);
-    }
 
-    async function win() {
-        log(`擊敗了 ${enemy.name}！`);
-        player.exp += 50;
-        if(player.exp >= 100) { player.lv++; player.exp=0; player.maxHp+=20; player.hp=player.maxHp; player.atk+=10; log("升級了！"); }
-        battleCount++;
-        await sleep(1000);
-        spawn();
+        p.busy = false;
+        document.getElementById('atk').disabled = false;
+        document.getElementById('skl').disabled = false;
     }
 
     function spawn() {
-        if(battleCount % 5 === 0) {
-            enemy = { name: "BOSS 史萊姆王", hp: 200, maxHp: 200, atk: 25 };
-            document.getElementById('enemy-img').style.filter = "hue-rotate(90deg) contrast(1.5)";
+        if((winCount+1) % 5 === 0) {
+            e = { name: "BOSS 魔王", hp: 300, mHp: 300, atk: 25 };
+            document.getElementById('e-img').style.filter = "hue-rotate(90deg) contrast(1.5)";
         } else {
-            enemy = { name: "史萊姆", hp: 40 + (player.lv*10), maxHp: 40 + (player.lv*10), atk: 8 + (player.lv*2) };
-            document.getElementById('enemy-img').style.filter = "none";
+            e = { name: "史萊姆", hp: 40 + (p.lv*10), mHp: 40 + (p.lv*10), atk: 8 + (p.lv*2) };
+            document.getElementById('e-img').style.filter = "none";
         }
-        updateUI();
+        log(`新的 ${e.name} 出現了！`);
+        update();
     }
 
-    function updateUI() {
-        document.getElementById('lv').innerText = player.lv;
-        document.getElementById('hp').innerText = Math.max(0, player.hp);
-        document.getElementById('hp-bar').style.width = (player.hp/player.maxHp*100) + "%";
-        document.getElementById('e-hp').innerText = Math.max(0, enemy.hp);
-        document.getElementById('e-hp-bar').style.width = (enemy.hp/enemy.maxHp*100) + "%";
-        document.getElementById('enemy-name').innerText = enemy.name;
-        if(player.lv >= 2) document.getElementById('skill-btn').classList.remove('hidden');
+    function update() {
+        document.getElementById('lv').innerText = p.lv;
+        document.getElementById('hp').innerText = Math.max(0, p.hp);
+        document.getElementById('hp-bar').style.width = (p.hp / p.mHp * 100) + "%";
+        document.getElementById('exp').innerText = p.exp;
+        document.getElementById('e-hp').innerText = Math.max(0, e.hp);
+        document.getElementById('e-hp-bar').style.width = (e.hp / e.mHp * 100) + "%";
+        document.getElementById('e-name').innerText = e.name;
+        if(p.lv >= 2) document.getElementById('skl').classList.remove('hidden');
     }
 
-    function log(m) { const l = document.getElementById('log-window'); l.innerHTML += `<div>> ${m}</div>`; l.scrollTop = l.scrollHeight; }
+    function log(m) { const l = document.getElementById('log'); l.innerHTML += `<div>> ${m}</div>`; l.scrollTop = l.scrollHeight; }
     function r(n) { return Math.floor(Math.random() * n); }
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-    function toggleBtns(b) { document.getElementById('atk-btn').disabled = !b; document.getElementById('skill-btn').disabled = !b; }
     function animate(id, x) { 
-        const e = document.getElementById(id); 
-        e.style.transform = `translateX(${x}px)`; 
-        setTimeout(()=>e.style.transform='none', 200); 
+        const el = document.getElementById(id); el.style.transition = '0.2s';
+        el.style.transform = `translateX(${x}px)`;
+        setTimeout(() => el.style.transform = 'none', 200);
     }
     function showDmg(id, val) {
-        const c = document.getElementById(id);
-        const p = document.createElement('div');
-        p.className = 'dmg-popup'; p.innerText = `-${val}`;
-        c.appendChild(p); setTimeout(()=>p.remove(), 800);
+        const c = document.getElementById(id); const d = document.createElement('div');
+        d.className = 'dmg'; d.innerText = `-${val}`; c.appendChild(d);
+        setTimeout(() => d.remove(), 800);
     }
-    updateUI();
+    update();
 </script>
 </body>
 </html>
-
