@@ -2,241 +2,213 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>Pixel RPG - Roguelike 隨機升級版</title>
+    <title>Pixel RPG - 勇者優化與雙敵版</title>
     <style>
+        :root { --gold: #f1c40f; --danger: #ff4757; }
         body { background: #fff; color: #333; font-family: sans-serif; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { width: 95vw; max-width: 1400px; height: 95vh; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .hidden { display: none !important; }
+        #game-container { width: 95vw; max-width: 1400px; display: flex; flex-direction: column; align-items: center; }
 
         /* 頂部 UI */
-        .stats-top { width: 100%; display: flex; justify-content: space-around; font-size: 1.5rem; font-weight: bold; background: #f8f9fa; padding: 15px; border-radius: 15px; }
+        .stats-top { width: 100%; display: flex; justify-content: space-around; font-size: 1.5rem; font-weight: bold; background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+
+        /* 戰鬥舞台：優化對齊 */
+        .arena { display: flex; justify-content: center; align-items: flex-end; gap: 3vw; width: 100%; height: 450px; }
         
-        /* 戰鬥舞台區域 */
-        .arena { display: flex; justify-content: center; align-items: flex-end; gap: 80px; width: 100%; height: 400px; margin-top: 20px; }
-        .character-box { width: 400px; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .sprite img { width: 350px; height: auto; image-rendering: pixelated; }
-        #player-sprite img { transform: scaleX(-1); }
+        .character-box { 
+            width: 30%; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            position: relative; 
+            transition: opacity 0.5s;
+        }
 
-        /* 血條與狀態 */
+        /* 勇者與怪物圖片強制約束 */
+        .sprite { 
+            width: 100%; 
+            height: 350px; 
+            display: flex; 
+            align-items: flex-end; 
+            justify-content: center; 
+        }
+        
+        .sprite img { 
+            max-width: 100%; 
+            max-height: 100%; 
+            image-rendering: pixelated; 
+            object-fit: contain; 
+        }
+
+        /* 重要：修正勇者翻轉與縮放 */
+        #player-sprite img { 
+            transform: scaleX(-1); /* 水平翻轉面向怪物 */
+        }
+
+        /* 血條與文字 */
         .hp-outer { width: 100%; height: 25px; background: #eee; border: 2px solid #ccc; border-radius: 15px; overflow: hidden; margin-top: 10px; }
-        .hp-inner { height: 100%; background: #ff4757; width: 100%; transition: width 0.3s; }
-        .buff-container { display: flex; gap: 5px; height: 30px; margin-top: 5px; }
-        .buff { padding: 2px 8px; border-radius: 5px; font-size: 0.8rem; color: white; background: #3498db; font-weight: bold; }
+        .hp-inner { height: 100%; background: var(--danger); width: 100%; transition: width 0.3s; }
+        .label { font-size: 1.4rem; font-weight: bold; margin-top: 5px; }
 
-        /* 升級三選一 彈窗 */
-        #level-up-modal {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9); z-index: 100;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .options-container { display: flex; gap: 20px; margin-top: 30px; }
-        .option-card {
-            width: 250px; padding: 20px; border: 3px solid #333; border-radius: 15px;
-            background: #fff; cursor: pointer; transition: 0.2s; text-align: center;
-        }
-        .option-card:hover { transform: scale(1.05); background: #f1f2f6; border-color: #3498db; }
-        .option-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #2f3542; }
-
-        /* 戰鬥控制 */
-        #log { width: 800px; height: 100px; background: #f1f2f6; border: 1px solid #ddd; padding: 15px; margin-top: 20px; overflow-y: auto; text-align: left; }
-        .btns { margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        button { padding: 12px 20px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 8px; border: none; background: #2f3542; color: #fff; }
+        /* 技能按鈕與日誌 */
+        #log { width: 80%; height: 100px; background: #f1f2f6; padding: 15px; margin-top: 20px; overflow-y: auto; font-size: 1.2rem; text-align: left; }
+        .btns { margin: 20px 0; display: flex; gap: 15px; }
+        button { padding: 15px 40px; font-size: 1.2rem; font-weight: bold; cursor: pointer; background: #2f3542; color: white; border: none; border-radius: 10px; }
         button:disabled { opacity: 0.3; }
 
-        /* 動畫 */
-        .dmg { position: absolute; top: 0; font-size: 3rem; font-weight: bold; animation: f 0.8s forwards; z-index: 50; }
-        @keyframes f { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
+        .hidden { display: none !important; }
+        .dmg { position: absolute; top: 0; font-size: 3rem; font-weight: bold; color: red; animation: f 0.8s forwards; pointer-events: none; }
+        @keyframes f { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <!-- 升級三選一介面 -->
-    <div id="level-up-modal" class="hidden">
-        <h1 style="font-size: 3rem; color: #f1c40f;">✨ 等級提升！選擇你的獎勵 ✨</h1>
-        <div class="options-container" id="level-options"></div>
+    <div class="stats-top">
+        <div>LV: <span id="lv">1</span></div>
+        <div id="story">💬 正在探索平原森林...</div>
+        <div>EXP: <span id="exp">0</span>/100</div>
     </div>
 
-    <!-- 戰鬥主介面 -->
-    <div id="main-ui">
-        <div class="stats-top">
-            <div>LV: <span id="lv">1</span></div>
-            <div id="story-line">💬 遭遇史萊姆...</div>
-            <div>EXP: <span id="exp">0</span>/100</div>
+    <div class="arena">
+        <!-- 勇者 -->
+        <div class="character-box">
+            <div id="p-msg"></div>
+            <div class="sprite" id="player-sprite"><img src="pixel_adventurer.png"></div>
+            <div class="label">勇者 (<span id="hp">100</span>/100)</div>
+            <div class="hp-outer"><div id="hp-bar" class="hp-inner"></div></div>
         </div>
 
-        <div class="arena">
-            <div class="character-box">
-                <div id="p-msg"></div>
-                <div class="sprite" id="player-sprite"><img src="pixel_adventurer.png"></div>
-                <div class="buff-container" id="p-buffs"></div>
-                <div style="font-size: 1.5rem; font-weight: bold; margin-top:10px;">勇者 (<span id="hp">100</span>/<span id="mhp">100</span>)</div>
-                <div class="hp-outer"><div id="hp-bar" class="hp-inner"></div></div>
-            </div>
-            <div class="character-box">
-                <div id="e-msg"></div>
-                <div class="sprite" id="enemy-sprite"><img src="pixel_slime.png" id="e-img"></div>
-                <div style="font-size: 1.5rem; font-weight: bold; margin-top:10px;"><span id="e-name">史萊姆</span> (HP: <span id="e-hp">40</span>)</div>
-                <div class="hp-outer"><div id="e-hp-bar" class="hp-inner"></div></div>
-            </div>
+        <!-- 敵人 1 -->
+        <div class="character-box" id="e1-box">
+            <div id="e1-msg"></div>
+            <div class="sprite"><img src="pixel_slime.png" id="e1-img"></div>
+            <div class="label"><span id="e1-name">史萊姆A</span> (HP: <span id="e1-hp">50</span>)</div>
+            <div class="hp-outer"><div id="e1-hp-bar" class="hp-inner"></div></div>
         </div>
 
-        <div id="log">> 準備戰鬥！</div>
-        <div class="btns" id="btn-group">
-            <button onclick="battle('atk')">🗡️ 普通攻擊</button>
+        <!-- 敵人 2 (後期自動開啟) -->
+        <div class="character-box hidden" id="e2-box">
+            <div id="e2-msg"></div>
+            <div class="sprite"><img src="pixel_slime.png" id="e2-img"></div>
+            <div class="label"><span id="e2-name">史萊姆B</span> (HP: <span id="e2-hp">50</span>)</div>
+            <div class="hp-outer"><div id="e2-hp-bar" class="hp-inner"></div></div>
         </div>
+    </div>
+
+    <div id="log">> 戰鬥準備開始！</div>
+    <div class="btns" id="btn-group">
+        <button onclick="handleBattle('atk')">⚔️ 普通攻擊</button>
+        <button id="skill-fire" class="hidden" onclick="handleBattle('fire')">🔥 火球術</button>
     </div>
 </div>
 
 <script>
-    // 遊戲狀態與技能庫
-    let p = { lv: 1, hp: 100, mhp: 100, atk: 20, exp: 0, busy: false, buffs: { shield: 0, power: 0 }, skills: [] };
-    let e = { name: "史萊姆", hp: 50, mhp: 50, atk: 12 };
-    let winCount = 0;
-
-    const allSkills = [
-        { id: 'fireball', name: '🔥 火球術', desc: '造成 2.5 倍魔法傷害', type: 'active' },
-        { id: 'heal', name: '💊 治療術', desc: '回復 30% 生命值', type: 'active' },
-        { id: 'shield', name: '🛡️ 聖盾', desc: '獲得 3 回合 50% 減傷', type: 'active' },
-        { id: 'double', name: '⚔️ 連斬', desc: '隨機發動 2~3 次攻擊', type: 'active' },
-        { id: 'lifesteal', name: '🧛 吸血', desc: '攻擊時回復 10% 傷害的體力', type: 'passive' },
-        { id: 'crit', name: '🎯 鷹眼', desc: '暴擊率提升 20%', type: 'passive' },
-        { id: 'poison', name: '🧪 毒刃', desc: '攻擊時附帶額外傷害', type: 'passive' },
-        { id: 'atk_up', name: '💪 力量強化', desc: '基礎攻擊力永久 +15', type: 'buff' },
-        { id: 'hp_up', name: '❤️ 生命強化', desc: '最大生命永久 +50', type: 'buff' },
-        { id: 'dodge', name: '💨 殘像', desc: '閃避率永久提升 15%', type: 'passive' }
+    let player = { lv: 1, hp: 100, mhp: 100, atk: 20, exp: 0, busy: false };
+    let enemyList = [
+        { id: 1, name: "史萊姆A", hp: 50, mhp: 50, atk: 10, active: true },
+        { id: 2, name: "史萊姆B", hp: 0, mhp: 50, atk: 10, active: false }
     ];
 
-    async function battle(type) {
-        if (p.busy) return; p.busy = true;
-        setBtns(false);
+    async function handleBattle(type) {
+        if (player.busy) return;
+        player.busy = true;
+        document.querySelectorAll('button').forEach(b => b.disabled = true);
 
-        // --- 玩家回合 ---
-        if (type === 'atk' || type === 'fireball' || type === 'double') {
-            let mult = (type === 'fireball') ? 2.5 : 1;
-            let hits = (type === 'double') ? (Math.random() > 0.5 ? 3 : 2) : 1;
-            
-            for(let i=0; i<hits; i++){
-                let dmg = Math.floor((p.atk + (p.buffs.power*10)) * mult + Math.random()*10);
-                if(p.skills.includes('crit') && Math.random() < 0.2) { dmg *= 2; pop('e-msg', 'CRIT!', '#f1c40f'); }
-                e.hp -= dmg;
-                pop('e-msg', `-${dmg}`, '#ff4757');
-                move('player-sprite', 40);
-                if(p.skills.includes('lifesteal')) { p.hp = Math.min(p.mhp, p.hp + Math.floor(dmg*0.1)); }
-                update();
-                await sleep(300);
-            }
-        } else if (type === 'heal') {
-            let heal = Math.floor(p.mhp * 0.3);
-            p.hp = Math.min(p.mhp, p.hp + heal);
-            pop('p-msg', `+${heal}`, '#2ed573');
-            log(`💊 你使用了治療術，回復了 ${heal} 點生命。`);
-        } else if (type === 'shield') {
-            p.buffs.shield = 3;
-            log(`🛡️ 你張開了聖盾，防禦提升！`);
-        }
-
-        await sleep(600);
-        if (e.hp <= 0) { await handleWin(); } 
-        else {
-            // --- 敵人回合 ---
-            if(p.skills.includes('dodge') && Math.random() < 0.15) {
-                log("💨 你閃避了攻擊！"); pop('p-msg', 'MISS', '#7f8c8d');
+        // 玩家攻擊邏輯
+        let targets = enemyList.filter(e => e.active && e.hp > 0);
+        if (targets.length > 0) {
+            let dmg = player.atk + Math.floor(Math.random() * 10);
+            if (type === 'fire') {
+                targets.forEach(t => dealDmg(t, Math.floor(dmg * 1.5)));
+                log(`🔥 火球術擊中所有敵人！`);
             } else {
-                let edmg = Math.floor(e.atk + Math.random()*5);
-                if(p.buffs.shield > 0) { edmg = Math.floor(edmg*0.5); p.buffs.shield--; }
-                p.hp -= edmg;
-                pop('p-msg', `-${edmg}`, '#ff4757');
-                move('enemy-sprite', -40);
+                dealDmg(targets[0], dmg);
+                log(`⚔️ 你對 ${targets[0].name} 造成了 ${dmg} 點傷害。`);
             }
-            update();
-            if (p.hp <= 0) { alert("你倒下了..."); location.reload(); }
+            move('player-sprite', 40);
         }
-        p.busy = false; setBtns(true);
+
+        await sleep(800);
+        updateUI();
+
+        // 檢查是否全滅
+        if (enemyList.filter(e => e.active && e.hp > 0).length === 0) {
+            await win();
+        } else {
+            // 敵人回合
+            for (let enemy of enemyList) {
+                if (enemy.active && enemy.hp > 0) {
+                    let edmg = enemy.atk + Math.floor(Math.random() * 5);
+                    player.hp -= edmg;
+                    popDmg('p-msg', edmg);
+                    log(`${enemy.name} 發動反擊，造成 ${edmg} 點傷害。`);
+                    updateUI();
+                    await sleep(400);
+                }
+            }
+            if (player.hp <= 0) { alert("戰敗！"); location.reload(); }
+        }
+
+        player.busy = false;
+        document.querySelectorAll('button').forEach(b => b.disabled = false);
     }
 
-    async function handleWin() {
-        log(`🎉 擊敗了 ${e.name}！`);
-        p.exp += 50;
-        if(p.exp >= 100) { await showLevelUp(); }
-        winCount++;
-        await sleep(800);
+    function dealDmg(target, amt) {
+        target.hp -= amt;
+        popDmg(`e${target.id}-msg`, amt);
+    }
+
+    async function win() {
+        log(`🎉 勝利！獲得經驗值。`);
+        player.exp += 50;
+        if (player.exp >= 100) {
+            player.lv++; player.exp = 0; player.mhp += 30; player.hp = player.mhp; player.atk += 10;
+            log(`✨ 等級提升！目前 Lv.${player.lv}`);
+        }
+        await sleep(1000);
         spawn();
     }
 
-    function showLevelUp() {
-        return new Promise(resolve => {
-            p.exp = 0; p.lv++;
-            const modal = document.getElementById('level-up-modal');
-            const container = document.getElementById('level-options');
-            modal.classList.remove('hidden');
-            container.innerHTML = '';
-
-            // 隨機選三種不重複的獎勵
-            let shuffled = [...allSkills].sort(() => 0.5 - Math.random()).slice(0, 3);
-            
-            shuffled.forEach(skill => {
-                const card = document.createElement('div');
-                card.className = 'option-card';
-                card.innerHTML = `<div class="option-title">${skill.name}</div><div>${skill.desc}</div>`;
-                card.onclick = () => {
-                    applyReward(skill);
-                    modal.classList.add('hidden');
-                    resolve();
-                };
-                container.appendChild(card);
-            });
-        });
-    }
-
-    function applyReward(skill) {
-        if(skill.type === 'active') {
-            if(!p.skills.includes(skill.id)) {
-                p.skills.push(skill.id);
-                const btn = document.createElement('button');
-                btn.innerText = skill.name;
-                btn.onclick = () => battle(skill.id);
-                document.getElementById('btn-group').appendChild(btn);
-            }
-            log(`✨ 學會了新技能：${skill.name}！`);
-        } else if(skill.id === 'atk_up') { p.atk += 15; }
-        else if(skill.id === 'hp_up') { p.mhp += 50; p.hp += 50; }
-        else { p.skills.push(skill.id); }
-        update();
-    }
-
     function spawn() {
-        e = { name: "史萊姆", hp: 40+(p.lv*20), mhp: 40+(p.lv*20), atk: 10+(p.lv*3) };
-        if(winCount % 5 === 0) { e.name = "🔥 BOSS 史萊姆"; e.hp *= 3; e.atk *= 1.5; document.getElementById('e-img').style.filter="hue-rotate(90deg)"; }
-        else { document.getElementById('e-img').style.filter="none"; }
-        update();
+        enemyList[0].hp = enemyList[0].mHp = 40 + (player.lv * 15);
+        if (player.lv >= 3) {
+            enemyList[1].active = true;
+            enemyList[1].hp = enemyList[1].mHp = 30 + (player.lv * 10);
+            document.getElementById('e2-box').classList.remove('hidden');
+            document.getElementById('story').innerText = "📍 區域：深處森林 (遭遇雙敵)";
+        }
+        updateUI();
     }
 
-    function update() {
-        document.getElementById('lv').innerText = p.lv;
-        document.getElementById('hp').innerText = Math.max(0, p.hp);
-        document.getElementById('mhp').innerText = p.mhp;
-        document.getElementById('hp-bar').style.width = (p.hp/p.mhp*100) + "%";
-        document.getElementById('e-hp').innerText = Math.max(0, e.hp);
-        document.getElementById('e-hp-bar').style.width = (e.hp/e.mhp*100) + "%";
-        document.getElementById('e-name').innerText = e.name;
-        document.getElementById('p-buffs').innerHTML = p.buffs.shield > 0 ? `<div class="buff">🛡️ 護盾 ${p.buffs.shield}</div>` : '';
+    function updateUI() {
+        document.getElementById('lv').innerText = player.lv;
+        document.getElementById('hp').innerText = Math.max(0, player.hp);
+        document.getElementById('hp-bar').style.width = (player.hp / player.mhp * 100) + "%";
+        document.getElementById('exp').innerText = player.exp;
+        
+        enemyList.forEach(e => {
+            const hpText = document.getElementById(`e${e.id}-hp`);
+            if(hpText) hpText.innerText = Math.max(0, e.hp);
+            const bar = document.getElementById(`e${e.id}-hp-bar`);
+            if(bar) bar.style.width = (e.hp / e.mhp * 100) + "%";
+            const box = document.getElementById(`e${e.id}-box`);
+            if(box) box.style.opacity = (e.active && e.hp > 0) ? "1" : "0.3";
+        });
+        if (player.lv >= 2) document.getElementById('skill-fire').classList.remove('hidden');
     }
 
     function log(m) { const l = document.getElementById('log'); l.innerHTML += `<div>> ${m}</div>`; l.scrollTop = l.scrollHeight; }
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-    function setBtns(s) { document.querySelectorAll('button').forEach(b => b.disabled = !s); }
-    function pop(id, t, c) {
-        const el = document.getElementById(id); const d = document.createElement('div');
-        d.className = 'dmg'; d.innerText = t; d.style.color = c;
-        el.appendChild(d); setTimeout(() => d.remove(), 800);
-    }
     function move(id, x) {
         const el = document.getElementById(id); el.style.transform = `translateX(${x}px)`;
         setTimeout(() => el.style.transform = 'none', 200);
     }
-    update();
+    function popDmg(id, val) {
+        const c = document.getElementById(id); const d = document.createElement('div');
+        d.className = 'dmg'; d.innerText = `-${val}`; c.appendChild(d);
+        setTimeout(() => d.remove(), 800);
+    }
+    updateUI();
 </script>
 </body>
 </html>
-
