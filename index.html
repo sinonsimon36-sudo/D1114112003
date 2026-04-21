@@ -2,10 +2,9 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel RPG - 終極整合裝備技能版</title>
+    <title>Pixel RPG - 技能與裝備大擴張版</title>
     <style>
-        :root { --gold: #f1c40f; --danger: #ff4757; --primary: #2f3542; --success: #2ecc71; --rarity: #9b59b6; }
+        :root { --gold: #f1c40f; --danger: #ff4757; --primary: #2f3542; --success: #2ecc71; --rarity: #9b59b6; --info: #3498db; }
 
         body { 
             background-image: url('pure_pixel_forest_background.png');
@@ -16,7 +15,7 @@
         }
 
         #game-container { 
-            width: 94vw; max-width: 1400px; height: 92vh; 
+            width: 92vw; max-width: 1400px; height: 92vh; 
             background: rgba(255, 255, 255, 0.88); backdrop-filter: blur(8px);
             border: 4px solid var(--primary); border-radius: 20px;
             display: flex; flex-direction: column; align-items: center; 
@@ -24,234 +23,245 @@
         }
 
         .hidden { display: none !important; }
-
-        /* 彈窗系統 */
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.96); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-radius: 18px; }
-        .card-wrap { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
-        .card { width: 220px; padding: 15px; border: 3px solid var(--primary); border-radius: 15px; cursor: pointer; background: #fff; transition: 0.3s; }
-        .card:hover { transform: translateY(-8px); border-color: var(--gold); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .card-wrap { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center; max-width: 1000px; }
+        .card { width: 200px; padding: 15px; border: 3px solid var(--primary); border-radius: 15px; cursor: pointer; background: #fff; transition: 0.3s; }
+        .card:hover { transform: translateY(-8px); border-color: var(--info); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
 
         .stats-bar { width: 100%; display: flex; justify-content: space-around; background: rgba(0,0,0,0.05); padding: 10px; font-size: 1.1rem; font-weight: bold; border-radius: 10px; }
-        
-        .arena { flex: 1; display: flex; justify-content: center; align-items: flex-end; gap: 30px; width: 100%; position: relative; }
+        .arena { flex: 1; display: flex; justify-content: center; align-items: flex-end; gap: 40px; width: 100%; position: relative; }
         .char-box { width: 320px; display: flex; flex-direction: column; align-items: center; position: relative; }
-        .sprite { width: 100%; height: 320px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
+        .sprite { width: 100%; height: 320px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; transition: transform 0.1s; }
         .sprite img { max-width: 100%; max-height: 100%; image-rendering: pixelated; object-fit: contain; }
         #p-sprite img { transform: scaleX(-1); }
 
         .hp-outer { width: 100%; height: 18px; background: #ddd; border-radius: 10px; overflow: hidden; margin-top: 5px; border: 2px solid #555; }
         .hp-inner { height: 100%; background: var(--danger); width: 100%; transition: width 0.3s; }
         
-        /* 裝備欄 (永久性裝備顯示在此) */
-        .equip-grid { display: flex; gap: 5px; margin-top: 5px; }
-        .slot { width: 45px; height: 45px; border: 2px solid #aaa; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 8px; }
+        /* 裝備格優化 */
+        .equip-grid { display: flex; gap: 6px; margin-top: 8px; }
+        .slot { width: 45px; height: 45px; border: 2px solid #aaa; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 8px; color: #333; }
 
-        /* 道具欄 (消耗品藥水顯示在此) */
-        .item-bar { display: flex; gap: 12px; margin: 10px 0; height: 65px; justify-content: center; }
-        .item-slot { width: 60px; height: 60px; border: 3px solid #666; background: #fff; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; font-size: 1.8rem; }
-        .item-slot .count { position: absolute; bottom: -5px; right: -5px; background: #e74c3c; color: #fff; font-size: 0.8rem; padding: 2px 7px; border-radius: 10px; font-weight: bold; }
+        /* 道具欄優化 */
+        .item-bar { display: flex; gap: 12px; margin: 10px 0; height: 60px; justify-content: center; }
+        .item-slot { width: 55px; height: 55px; border: 3px solid #666; background: #fff; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; font-size: 1.6rem; }
+        .item-slot .count { position: absolute; bottom: -5px; right: -5px; background: #e74c3c; color: #fff; font-size: 0.75rem; padding: 2px 7px; border-radius: 10px; font-weight: bold; }
 
-        #log { width: 85%; height: 80px; background: rgba(0,0,0,0.03); padding: 10px; overflow-y: auto; text-align: left; border-radius: 8px; font-size: 0.95rem; border: 1px solid #ccc; }
-        .btns { margin: 10px 0; display: flex; gap: 12px; z-index: 1000; }
-        button { padding: 12px 35px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border: none; border-radius: 10px; background: var(--primary); color: #fff; box-shadow: 0 4px 0 #000; }
+        #log { width: 85%; height: 75px; background: rgba(0,0,0,0.03); padding: 10px; overflow-y: auto; text-align: left; border-radius: 8px; font-size: 0.95rem; border: 1px solid #ccc; }
+        .btns { margin: 10px 0; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; z-index: 1000; }
+        button { padding: 10px 25px; font-size: 1rem; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background: var(--primary); color: #fff; box-shadow: 0 4px 0 #000; }
         button:active { transform: translateY(2px); box-shadow: 0 1px 0 #000; }
         button:disabled { opacity: 0.4; }
 
-        .dmg { position: absolute; top: 0; font-size: 3rem; font-weight: bold; color: red; animation: fUp 0.8s forwards; pointer-events: none; z-index: 100; }
-        @keyframes fUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-120px); } }
+        /* 傷害飄字動畫 */
+        .dmg { position: absolute; top: -20px; font-weight: 900; pointer-events: none; z-index: 100; animation: floatUp 0.8s ease-out forwards; }
+        @keyframes floatUp { 
+            0% { opacity: 1; transform: translateY(0) scale(1); } 
+            50% { transform: translateY(-60px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-120px) scale(1); } 
+        }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <!-- 大廳 -->
     <div id="lobby" class="overlay">
-        <img src="pixel_art_rpg_logo.png" style="width:400px; margin-bottom:20px;">
-        <h1 style="font-size: 3rem; margin:0;">勇者傳說：終極版</h1>
-        <p style="font-size: 1.2rem; color: #555;">已優化裝備顯示與技能系統。準備好對抗魔王了嗎？</p>
-        <button onclick="startGame()">正式出發</button>
+        <img src="pixel_art_rpg_logo.png" style="width:380px; margin-bottom:15px;">
+        <h1 style="margin:0;">勇者傳說：無限神裝</h1>
+        <p>收集稀有裝備，挑戰史萊姆魔王！</p>
+        <button onclick="startGame()">開始旅程</button>
     </div>
 
-    <!-- 升級三選一 -->
     <div id="lv-modal" class="overlay hidden">
-        <h1 style="color:var(--gold); font-size: 2.8rem;">✨ 天賦覺醒：三選一 ✨</h1>
+        <h1 style="color:var(--gold);">✨ 突破極限：選擇天賦 ✨</h1>
         <div id="lv-options" class="card-wrap"></div>
     </div>
 
-    <!-- 商城 -->
     <div id="shop-modal" class="overlay hidden">
-        <h1>🛒 冒險者交易所</h1>
-        <p>持金：<span id="shop-gold" style="color:var(--gold)">0</span> G</p>
+        <h1>🛒 冒險者百貨</h1>
+        <p>持有金幣：<span id="shop-gold" style="color:var(--gold)">0</span> G</p>
         <div id="shop-items" class="card-wrap"></div>
-        <button style="margin-top:20px; background:#777" onclick="toggleShop(false)">離開商店</button>
+        <button style="margin-top:15px; background:#777" onclick="toggleShop(false)">返回森林</button>
     </div>
 
-    <!-- 戰鬥畫面 -->
     <div id="battle-ui" class="hidden" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center;">
         <div class="stats-bar">
             <div>🛡️ LV: <span id="lv">1</span></div>
-            <div id="story-text">💬 正在探索...</div>
+            <div id="story-text">💬 正在穿過森林...</div>
             <div style="color:var(--gold)">💰 <span id="gold">0</span> G</div>
-            <div>⭐ 進度: <span id="kill-count">0</span>/5</div>
+            <div>⭐ BOSS 進度: <span id="kill-count">0</span>/5</div>
         </div>
 
         <div class="arena">
             <div class="char-box">
                 <div id="p-msg"></div>
                 <div class="sprite" id="p-sprite"><img src="pixel_adventurer.png"></div>
-                <!-- 裝備欄位 (4格) -->
                 <div class="equip-grid">
-                    <div class="slot" id="slot-w" title="武器"></div>
-                    <div class="slot" id="slot-a" title="防具"></div>
-                    <div class="slot" id="slot-b" title="飾品"></div>
-                    <div class="slot" id="slot-s" title="飾品2"></div>
+                    <div class="slot" id="slot-1" title="武器"></div>
+                    <div class="slot" id="slot-2" title="防具"></div>
+                    <div class="slot" id="slot-3" title="飾品"></div>
+                    <div class="slot" id="slot-4" title="靴子"></div>
                 </div>
                 <div style="font-weight:bold; margin-top:5px;">勇者 (HP: <span id="hp">100</span>/<span id="mhp">100</span>)</div>
                 <div class="hp-outer"><div id="hp-bar" class="hp-inner"></div></div>
             </div>
             <div class="char-box" id="e1-box">
                 <div id="e1-msg"></div>
-                <div class="sprite"><img src="pixel_slime.png" id="e1-img"></div>
-                <div id="e1-tag" style="background:#2ed573; padding:3px 12px; border-radius:12px; color:#fff; font-size:0.8rem; font-weight:bold; margin-bottom:5px;">普通</div>
+                <div class="sprite" id="e1-sprite"><img src="pixel_slime.png" id="e1-img"></div>
+                <div id="e1-tag" style="background:#2ed573; padding:2px 10px; border-radius:10px; color:#fff; font-size:0.75rem; font-weight:bold; margin-bottom:5px;">普通</div>
                 <div style="font-weight:bold;"><span id="e1-name">史萊姆</span></div>
                 <div class="hp-outer"><div id="e1-hp-bar" class="hp-inner"></div></div>
             </div>
         </div>
 
-        <!-- 道具使用欄 (僅消耗品藥水) -->
         <div class="item-bar" id="p-items"></div>
-
-        <div id="log">> 勇者踏入戰場...</div>
+        <div id="log">> 戰鬥準備開始...</div>
         <div class="btns" id="btn-group">
-            <button id="atk-btn" onclick="handleBattle('atk')">🗡️ 發動攻擊</button>
-            <button style="background:#e67e22" onclick="toggleShop(true)">🛒 前往商店</button>
+            <button id="atk-btn" onclick="handleBattle('atk')">🗡️ 普通攻擊</button>
+            <button style="background:#e67e22" onclick="toggleShop(true)">🛒 商城</button>
         </div>
     </div>
 </div>
 
 <script>
-    // --- 擴張版遊戲狀態 ---
+    // --- 擴張後的數據庫 ---
     let g = {
-        p: { lv:1, hp:100, mhp:100, atk:25, gold:100, exp:0, busy:false, skills:[], equips:[], inv:{pot:1}, crit:0.1, lifesteal:0, dodge:0 },
-        enemies: [],
-        killCount: 0
+        p: { lv:1, hp:100, mhp:100, atk:25, gold:100, exp:0, busy:false, skills:[], equips:[], inv:{pot:1}, crit:0.1, life:0, dodge:0, goldMult:1, double:0 },
+        enemies: [], killCount: 0
     };
 
-    const slimeLib = [
-        { n: "綠史萊姆", c: "none", h: 1, a: 1, g: 1, bg: "#2ed573" },
-        { n: "火史萊姆", c: "hue-rotate(0deg) saturate(2.5)", h: 1.2, a: 1.6, g: 1.5, bg: "#e74c3c" },
-        { n: "金史萊姆", c: "sepia(1) saturate(10)", h: 4.5, a: 0.6, g: 25, bg: "#d4af37" }
-    ];
-
     const talentPool = [
-        { id:'fire', n:'🔥 火球術', d:'解鎖全體 2.5 倍傷害' },
-        { id:'bolt', n:'⚡ 連鎖閃電', d:'對所有敵人造成固定傷害' },
+        { id:'fire', n:'🔥 火球術', d:'2.5 倍群體法傷' },
+        { id:'thunder', n:'⚡ 雷擊術', d:'高機率對單體暴擊' },
+        { id:'double', n:'⚔️ 二連斬', d:'25% 機率攻擊兩次' },
+        { id:'poison', n:'☠️ 毒霧', d:'每回合固定額外傷害' },
+        { id:'shield', n:'🛡️ 守護', d:'獲得永久 15% 減傷' },
         { id:'crit', n:'🎯 鷹眼', d:'暴擊率提升 25%' },
-        { id:'life', n:'🧛 嗜血天賦', d:'攻擊附帶 20% 吸血' },
+        { id:'life', n:'🧛 嗜血', d:'攻擊附帶 20% 吸血' },
         { id:'hp', n:'❤️ 生命強化', d:'最大 HP +80' }
     ];
 
-    const shopItems = [
-        { id:'sword', n:'⚔️ 嗜血大劍', p:180, d:'ATK+30', type:'permanent', slot:'w', icon:'⚔️' },
-        { id:'armor', n:'🛡️ 龍鱗重甲', p:220, d:'HP+150', type:'permanent', slot:'a', icon:'🛡️' },
-        { id:'boots', n:'🥾 速度之靴', p:120, d:'閃避率 +15%', type:'permanent', slot:'b', icon:'🥾' },
-        { id:'pot', n:'🧪 回復藥水', p:30, d:'補 50% HP (入道具欄)', type:'consume', icon:'🧪' }
+    const shopList = [
+        { id:'sword', n:'⚔️ 屠龍寶刀', p:180, d:'ATK +30', s:1, i:'⚔️' },
+        { id:'armor', n:'🛡️ 不滅重甲', p:250, d:'HP +150', s:2, i:'🛡️' },
+        { id:'amulet', n:'📿 黃金護身符', p:150, d:'金幣獲取 +50%', s:3, i:'📿' },
+        { id:'boots', n:'🥾 疾行之靴', p:120, d:'閃避率 +15%', s:4, i:'🥾' },
+        { id:'pot', n:'🧪 回復藥水', p:30, d:'補 50% HP', consume:true }
     ];
 
-    function startGame() { 
-        document.getElementById('lobby').classList.add('hidden'); 
-        document.getElementById('battle-ui').classList.remove('hidden'); 
-        spawn(); updateUI();
-    }
+    function startGame() { document.getElementById('lobby').classList.add('hidden'); document.getElementById('battle-ui').classList.remove('hidden'); spawn(); updateUI(); }
 
     async function handleBattle(type) {
         if (g.p.busy) return; g.p.busy = true; setBtns(false);
         try {
-            let targets = g.enemies.filter(e => e.hp > 0);
-            let baseDmg = g.p.atk + (g.p.equips.includes('sword')?30:0) + r(10);
+            let t = g.enemies;
+            let baseDmg = g.p.atk + (g.p.equips.includes('sword')?30:0);
 
-            // 1. 玩家回合
-            if (type === 'atk') {
-                let t = targets[0];
-                let isCrit = Math.random() < g.p.crit;
-                let finalDmg = isCrit ? baseDmg * 2 : baseDmg;
-                t.hp -= finalDmg; pop(`e1-msg`, (isCrit?'暴擊! ':'')+'-'+finalDmg, isCrit?'orange':'red');
-                move('p-sprite', 50); log(`🗡️ 你攻擊 ${t.name}，造成 ${finalDmg} 點傷害。`);
-                if(g.p.lifesteal > 0) g.p.hp = Math.min(g.p.mhp, g.p.hp + finalDmg*0.2);
-            } else if (type === 'fire') {
-                targets.forEach(t => { t.hp -= baseDmg*2.5; pop(`e1-msg`, '-'+(baseDmg*2.5)); });
-                log("🔥 施放火球！敵群受到重創！");
+            // 1. 玩家回合 (檢查連擊)
+            let hits = (g.p.skills.includes('double') && Math.random() < 0.25) ? 2 : 1;
+            for(let i=0; i<hits; i++) {
+                let dmg = Math.floor(baseDmg + r(10));
+                let isCrit = Math.random() < g.p.crit || (type==='thunder' && Math.random()<0.4);
+                if(type==='fire') dmg *= 2.5;
+                if(isCrit) dmg *= 2;
+
+                t.hp -= dmg;
+                pop('e1-msg', (isCrit?'🔥CRIT! ':'')+'-'+dmg, isCrit?'orange':'red', isCrit?'3rem':'2.2rem');
+                move('p-sprite', 40); shake('e1-sprite');
+                log(`🗡️ 你施展攻擊，造成 ${dmg} 點傷害。`);
+                
+                if(g.p.life > 0) {
+                    let heal = Math.floor(dmg * 0.2);
+                    g.p.hp = Math.min(g.p.mhp, g.p.hp + heal);
+                    pop('p-msg', '+'+heal, 'green', '1.5rem');
+                }
+                updateUI(); await sleep(300);
             }
 
-            updateUI(); await sleep(700);
-
-            // 2. 檢查勝利
-            if (g.enemies.every(e => e.hp <= 0)) {
-                await handleWin();
-            } else {
-                // 3. 敵人反擊
-                for (let e of g.enemies) {
-                    if (e.hp > 0) {
-                        if(Math.random() < g.p.dodge) {
-                            pop('p-msg', '閃避!', 'gray'); log(`💨 你閃過了 ${e.name} 的攻擊！`);
-                        } else {
-                            let edmg = e.atk; g.p.hp -= edmg; pop('p-msg', '-'+edmg);
-                        }
-                        updateUI(); await sleep(400);
-                    }
+            if (t.hp <= 0) { await handleWin(); } 
+            else {
+                // 2. 史萊姆毒傷 (如果有學毒霧)
+                if(g.p.skills.includes('poison')) {
+                    t.hp -= 20; pop('e1-msg', '-20', 'purple', '1.8rem');
+                    log(`☠️ 毒霧對敵人造成持續傷害！`);
+                    updateUI(); await sleep(300);
                 }
-                if (g.p.hp <= 0) { alert("戰敗！"); location.reload(); }
+
+                if(t.hp > 0) {
+                    // 3. 敵人反擊 (檢查閃避)
+                    if(Math.random() < g.p.dodge) {
+                        pop('p-msg', 'MISS!', 'gray', '2rem');
+                        log(`💨 你敏捷地閃開了對方的攻擊！`);
+                    } else {
+                        let edmg = Math.floor(t.atk * (g.p.skills.includes('shield')?0.85:1));
+                        g.p.hp -= edmg; pop('p-msg', '-'+edmg, 'red', '2rem'); shake('p-sprite');
+                        log(`${t.name} 發動反擊，造成 ${edmg} 點傷害。`);
+                    }
+                    updateUI(); await sleep(400);
+                }
+                if (g.p.hp <= 0) { alert("勇者敗北！冒險重開。"); location.reload(); }
+                if (t.hp <= 0) await handleWin();
             }
         } finally { g.p.busy = false; setBtns(true); }
     }
 
     function useItem(id) {
         if(g.p.busy || g.p.inv[id] <= 0) return;
-        if(id === 'pot') { 
-            let heal = Math.floor(g.p.mhp * 0.5);
-            g.p.hp = Math.min(g.p.mhp, g.p.hp + heal); 
-            g.p.inv[id]--; 
-            log(`🧪 使用藥水，體力回復 ${heal} 點。`); 
-            pop('p-msg', '+'+heal, 'green'); 
-        }
+        let heal = Math.floor(g.p.mhp * 0.5);
+        g.p.hp = Math.min(g.p.mhp, g.p.hp + heal); g.p.inv[id]--; 
+        log(`🧪 使用藥水，體力回復 ${heal} 點。`); pop('p-msg', '+'+heal, 'green', '2rem');
         updateUI();
     }
 
     async function handleWin() {
-        let isB = g.enemies.some(e => e.isBoss);
-        let gold = g.enemies.reduce((s,e)=>s+e.gold, 0); g.p.gold += gold; g.p.exp += 50;
+        let isB = g.enemies.isBoss;
+        let gold = Math.floor((g.enemies.gold + r(20)) * g.p.goldMult);
+        g.p.gold += gold; g.p.exp += 50;
         log(`🎉 勝利！獲得了 ${gold} G。`);
         if (g.p.exp >= 100) await showLevelUp();
         if(!isB) g.killCount++; else g.killCount = 0;
-        await sleep(1000); spawn();
+        await sleep(800); spawn();
     }
 
     function spawn() {
         g.enemies = [];
-        const isB = g.killCount >= 5;
-        if(isB) {
-            g.enemies.push({ id:1, name:"👿 魔王史萊姆", hp:600+g.p.lv*100, mhp:600+g.p.lv*100, atk:35+g.p.lv*5, gold:200, isBoss:true });
+        if(g.killCount >= 5) {
+            g.enemies.push({ id:1, name:"👿 史萊姆大魔王", hp:600+g.p.lv*100, mhp:600+g.p.lv*100, atk:35, gold:200, isBoss:true });
             document.getElementById('e1-img').style.filter = "hue-rotate(280deg) brightness(0.7) scale(1.4)";
             document.getElementById('e1-tag').innerText = "BOSS";
-            document.getElementById('e2-box').classList.add('hidden');
         } else {
-            g.enemies.push(createE(1));
-            if(g.p.lv >= 5 && Math.random() < 0.4) {
-                g.enemies.push(createE(2)); document.getElementById('e2-box').classList.remove('hidden');
-            } else document.getElementById('e2-box').classList.add('hidden');
+            g.enemies.push({ id:1, name:"史萊姆", hp:50+g.p.lv*15, mhp:50+g.p.lv*15, atk:12, gold:25, isBoss:false });
             document.getElementById('e1-img').style.filter = "none";
+            document.getElementById('e1-tag').innerText = "普通";
         }
         updateUI();
     }
 
-    function createE(id) {
-        let t = slimeLib[r(slimeLib.length)];
-        const e = { id, name: t.n, hp: (50+g.p.lv*10)*t.h, mhp: (50+g.p.lv*10)*t.h, atk: (10+g.p.lv*2)*t.a, gold: (20+g.p.lv*5)*t.g };
-        document.getElementById(`e${id}-img`).style.filter = t.c;
-        document.getElementById(`e${id}-tag`).innerText = t.n.replace("史萊姆","");
-        document.getElementById(`e${id}-tag`).style.background = t.bg;
-        document.getElementById(`e${id}-name`).innerText = t.n;
-        return e;
+    function toggleShop(s) {
+        document.getElementById('shop-modal').classList.toggle('hidden', !s);
+        document.getElementById('shop-gold').innerText = g.p.gold;
+        const cont = document.getElementById('shop-items'); cont.innerHTML = '';
+        shopList.forEach(i => {
+            const c = document.createElement('div'); c.className = 'card';
+            c.innerHTML = `<h3>${i.n}</h3><p>${i.d}</p><p style="color:var(--gold)">${i.p} G</p>`;
+            c.onclick = () => {
+                if(g.p.gold >= i.p) {
+                    if(i.consume) { g.p.gold -= i.p; g.p.inv.pot++; log(`🛒 購買藥水成功。`); }
+                    else {
+                        if(!g.p.equips.includes(i.id)) {
+                            g.p.gold -= i.p; g.p.equips.push(i.id); 
+                            document.getElementById('slot-'+i.s).innerText = i.i;
+                            if(i.id==='armor') g.p.mhp += 150;
+                            if(i.id==='amulet') g.p.goldMult = 1.5;
+                            if(i.id==='boots') g.p.dodge = 0.15;
+                            log(`🛒 裝備了 ${i.n}！`);
+                        } else alert("已擁有此裝備！");
+                    }
+                    toggleShop(true); updateUI();
+                } else alert("錢不夠！");
+            };
+            cont.appendChild(c);
+        });
     }
 
     function showLevelUp() {
@@ -265,7 +275,7 @@
                 c.onclick = () => {
                     if(s.id==='hp') { g.p.mhp+=80; g.p.hp=g.p.mhp; }
                     else if(s.id==='crit') g.p.crit += 0.25;
-                    else if(s.id==='life') g.p.lifesteal = 1;
+                    else if(s.id==='life') g.p.life = 1;
                     else if(!g.p.skills.includes(s.id)) {
                         g.p.skills.push(s.id);
                         const b = document.createElement('button'); b.innerText = s.n; 
@@ -278,34 +288,6 @@
         });
     }
 
-    function toggleShop(s) {
-        document.getElementById('shop-modal').classList.toggle('hidden', !s);
-        document.getElementById('shop-gold').innerText = g.p.gold;
-        const cont = document.getElementById('shop-items'); cont.innerHTML = '';
-        shopItems.forEach(i => {
-            const c = document.createElement('div'); c.className = 'card';
-            c.innerHTML = `<h3>${i.n}</h3><p>${i.d}</p><p style="color:var(--gold)">${i.p} G</p>`;
-            c.onclick = () => {
-                if(g.p.gold >= i.p) {
-                    g.p.gold -= i.p; 
-                    if(i.type==='consume') {
-                        g.p.inv.pot++; log(`🛒 購買了 ${i.n}，已存入道具欄。`);
-                    } else { 
-                        if(!g.p.equips.includes(i.id)) {
-                            g.p.equips.push(i.id); 
-                            document.getElementById('slot-'+i.slot).innerText = i.icon;
-                            if(i.id==='armor') g.p.mhp += 150;
-                            if(i.id==='boots') g.p.dodge = 0.15;
-                            log(`🛒 裝備了 ${i.n}！`);
-                        } else { alert("已擁有該裝備！"); g.p.gold += i.p; }
-                    }
-                    toggleShop(true); updateUI();
-                } else alert("錢不夠！");
-            };
-            cont.appendChild(c);
-        });
-    }
-
     function updateUI() {
         document.getElementById('lv').innerText = g.p.lv;
         document.getElementById('hp').innerText = Math.floor(g.p.hp); 
@@ -313,17 +295,13 @@
         document.getElementById('hp-bar').style.width = (g.p.hp/g.p.mhp*100) + "%";
         document.getElementById('gold').innerText = g.p.gold;
         document.getElementById('kill-count').innerText = g.killCount % 5;
+        let e = g.enemies;
+        document.getElementById('e1-hp-bar').style.width = (e.hp/e.mhp*100) + "%";
+        document.getElementById('e1-name').innerText = e.name;
         
-        g.enemies.forEach(e => {
-            const bar = document.getElementById(`e1-hp-bar`);
-            if(bar) bar.style.width = (Math.max(0, e.hp)/e.mhp*100) + "%";
-        });
-
-        // 刷新道具欄顯示
         const iBox = document.getElementById('p-items'); iBox.innerHTML = '';
         const count = g.p.inv.pot;
-        const slot = document.createElement('div'); 
-        slot.className = `item-slot ${count===0?'empty':''}`;
+        const slot = document.createElement('div'); slot.className = `item-slot ${count===0?'empty':''}`;
         slot.innerHTML = `<span>🧪</span>${count>0?`<div class="count">x${count}</div>`:''}`;
         if(count>0) slot.onclick = () => useItem('pot');
         iBox.appendChild(slot);
@@ -334,9 +312,10 @@
     function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
     function setBtns(s) { document.querySelectorAll('button').forEach(b => { if(!b.parentElement.classList.contains('card')) b.disabled = !s; }); }
     function move(id, x) { const e = document.getElementById(id); e.style.transform = `translateX(${x}px)`; setTimeout(()=>e.style.transform='none', 200); }
-    function pop(id, t, c) {
+    function shake(id) { const e = document.getElementById(id); e.style.transform = `translateX(6px)`; setTimeout(()=>e.style.transform=`translateX(-6px)`, 50); setTimeout(()=>e.style.transform='none', 100); }
+    function pop(id, t, c, fs) {
         const cl = document.getElementById(id); const d = document.createElement('div');
-        d.className = 'dmg'; d.innerText = t; d.style.color = c || 'red';
+        d.className = 'dmg'; d.innerText = t; d.style.color = c; if(fs) d.style.fontSize = fs;
         cl.appendChild(d); setTimeout(()=>d.remove(), 800);
     }
 </script>
